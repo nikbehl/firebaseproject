@@ -1,5 +1,8 @@
 import 'dart:convert';
 
+import 'package:firebaseproject/screens/data_display_screen.dart';
+import 'package:firebaseproject/screens/prompt_screen.dart';
+import 'package:firebaseproject/utils/profession_card.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/http.dart';
@@ -106,55 +109,6 @@ class HomeScreen extends StatelessWidget {
   }
 }
 
-class ProfessionCard extends StatelessWidget {
-  final String title;
-  final String status;
-  final IconData icon;
-  final Color color;
-
-  const ProfessionCard(
-      {super.key,
-      required this.title,
-      required this.status,
-      required this.icon,
-      required this.color});
-
-  @override
-  Widget build(BuildContext context) {
-    return Card(
-      elevation: 4,
-      child: InkWell(
-        onTap: status == 'Available'
-            ? () {
-                Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) =>
-                          TechnologyCategoriesScreen(profession: title),
-                    ));
-                print("Navigating to $title");
-              }
-            : null, // Disable onTap if status is not 'Available'
-        child: Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(icon, size: 40, color: color),
-              const SizedBox(height: 10),
-              Text(title, textAlign: TextAlign.center),
-              const SizedBox(height: 5),
-              Text(
-                status,
-                style: TextStyle(color: color, fontWeight: FontWeight.bold),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
 class TechnologyCategoriesScreen extends StatelessWidget {
   final String profession;
   const TechnologyCategoriesScreen({super.key, required this.profession});
@@ -191,159 +145,6 @@ class TechnologyCategoriesScreen extends StatelessWidget {
             },
           );
         },
-      ),
-    );
-  }
-}
-
-class PromptScreen extends StatefulWidget {
-  final String profession;
-  final String category;
-
-  const PromptScreen(
-      {super.key, required this.profession, required this.category});
-
-  @override
-  _PromptScreenState createState() => _PromptScreenState();
-}
-
-class _PromptScreenState extends State<PromptScreen> {
-  final TextEditingController _promptController = TextEditingController();
-
-  @override
-  void dispose() {
-    _promptController.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text('${widget.profession} - ${widget.category} - Prompt'),
-      ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          children: [
-            TextField(
-              controller: _promptController,
-              decoration: const InputDecoration(
-                hintText: 'Enter your prompt here',
-              ),
-            ),
-            ElevatedButton(
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => DataDisplayScreen(
-                      profession: widget.profession,
-                      category: widget.category,
-                      prompt: _promptController.text,
-                    ),
-                  ),
-                );
-              },
-              child: const Text('Get Data'),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class DataDisplayScreen extends StatefulWidget {
-  final String profession;
-  final String category;
-  final String prompt;
-
-  const DataDisplayScreen(
-      {super.key,
-      required this.profession,
-      required this.category,
-      required this.prompt});
-
-  @override
-  _DataDisplayScreenState createState() => _DataDisplayScreenState();
-}
-
-class _DataDisplayScreenState extends State<DataDisplayScreen> {
-  String _data = 'Loading...';
-
-  @override
-  void initState() {
-    super.initState();
-    fetchData(
-        widget.category, widget.prompt); // Corrected: Passing the arguments
-  }
-
-  // Replace with actual free chatbot API endpoint and logic
-  Future<void> fetchData(String category, String prompt) async {
-    final String apiKey =
-        "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"; // Your API key
-    const String apiUrl =
-        "https://api.groq.com/openai/v1/chat/completions"; // Correct endpoint for chat completions
-
-    try {
-      final response = await http.post(
-        Uri.parse(apiUrl),
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer $apiKey', // Correct format for Groq API key
-        },
-        body: jsonEncode({
-          "model":
-              "gemma2-9b-it", // Or another available model, refer to documentation
-          "messages": [
-            {"role": "user", "content": "category: $category ,prompt: $prompt"}
-          ],
-        }),
-      );
-
-      if (response.statusCode == 200) {
-        // Successful API call
-        final data = jsonDecode(response.body);
-        print('API Response: $data');
-        final responseMessage = data['choices'][0]['message']['content'];
-
-        setState(() {
-          _data = responseMessage;
-        });
-      } else if (response.statusCode == 401) {
-        // Unauthorized error (API key issue)
-        print('Error 401: Unauthorized - Check your API key and permissions.');
-        print(response.body); // Print the error details from the server
-        setState(() {
-          _data =
-              "Error 401: Unauthorized - Check your API key and permissions.";
-        });
-      } else {
-        // Other errors
-        print('Error ${response.statusCode}: ${response.body}');
-        print(response.body); // Print the error details from the server
-        setState(() {
-          _data = 'Error ${response.statusCode}: ${response.body}';
-        });
-      }
-    } catch (e) {
-      print('Error during API call: $e');
-      setState(() {
-        _data = 'Error during API call: $e';
-      });
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text('${widget.profession} - ${widget.category} - Data'),
-      ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: SingleChildScrollView(child: Text(_data)),
       ),
     );
   }
