@@ -1,5 +1,7 @@
-import 'package:firebaseproject/main.dart';
+import 'package:firebaseproject/controllers/profession_controller.dart';
+import 'package:firebaseproject/screens/tech_category_screen.dart';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 
 class ProfessionCard extends StatelessWidget {
   final String title;
@@ -7,27 +9,28 @@ class ProfessionCard extends StatelessWidget {
   final IconData icon;
   final Color color;
 
-  const ProfessionCard(
-      {super.key,
-      required this.title,
-      required this.status,
-      required this.icon,
-      required this.color});
+  const ProfessionCard({
+    super.key,
+    required this.title,
+    required this.status,
+    required this.icon,
+    required this.color,
+  });
 
   @override
   Widget build(BuildContext context) {
+    final professionController = Get.find<ProfessionController>();
+
     return Card(
       elevation: 4,
       child: InkWell(
         onTap: status == 'Available'
             ? () {
-                Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) =>
-                          TechnologyCategoriesScreen(profession: title),
-                    ));
-                print("Navigating to $title");
+                // Set the selected profession in the controller
+                professionController.setSelectedProfession(title);
+
+                // Navigate to categories screen
+                Get.to(() => TechnologyCategoriesScreen(profession: title));
               }
             : null, // Disable onTap if status is not 'Available'
         child: Center(

@@ -1,11 +1,13 @@
-import 'dart:convert';
-
-import 'package:firebaseproject/screens/data_display_screen.dart';
-import 'package:firebaseproject/screens/prompt_screen.dart';
+import 'package:firebaseproject/controllers/category_controller.dart';
+import 'package:firebaseproject/controllers/job_controller.dart';
+import 'package:firebaseproject/controllers/profession_controller.dart';
+import 'package:firebaseproject/controllers/prompt_controller.dart';
+import 'package:firebaseproject/controllers/quiz_controller.dart';
+import 'package:firebaseproject/controllers/tech_guide_controller.dart';
+import 'package:firebaseproject/screens/tech_category_screen.dart';
 import 'package:firebaseproject/utils/profession_card.dart';
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
-import 'package:http/http.dart';
+import 'package:get/get.dart';
 
 void main() {
   runApp(const MyApp());
@@ -17,15 +19,30 @@ class MyApp extends StatelessWidget {
   // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
+    return GetMaterialApp(
       debugShowCheckedModeBanner: false,
-      title: 'Flutter Demo',
+      title: 'Tech Guide',
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
         useMaterial3: true,
       ),
+      initialBinding: AppBindings(),
       home: const HomeScreen(),
     );
+  }
+}
+
+// Define initial bindings for all controllers
+class AppBindings extends Bindings {
+  @override
+  void dependencies() {
+    // Register all controllers
+    Get.put(ProfessionController());
+    Get.put(CategoryController());
+    Get.put(PromptController());
+    Get.put(TechGuideController());
+    Get.put(QuizController());
+    Get.put(JobController());
   }
 }
 
@@ -34,6 +51,9 @@ class HomeScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Get the profession controller
+    final professionController = Get.find<ProfessionController>();
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Tech Guide'),
@@ -50,50 +70,21 @@ class HomeScreen extends StatelessWidget {
             ),
             const SizedBox(height: 20),
             Expanded(
-              child: GridView.count(
-                crossAxisCount: 2, // 2 columns
-                crossAxisSpacing: 16,
-                mainAxisSpacing: 16,
-                childAspectRatio: 1.1, // Adjust as needed for card height
-                children: const [
-                  ProfessionCard(
-                    title: 'Frontend Developer',
-                    status: 'Available',
-                    icon: Icons.web,
-                    color: Colors.green,
-                  ),
-                  ProfessionCard(
-                    title: 'Backend Developer',
-                    status: 'Available',
-                    icon: Icons.storage,
-                    color: Colors.green,
-                  ),
-                  ProfessionCard(
-                    title: 'UI/UX Designer',
-                    status: 'Coming Soon',
-                    icon: Icons.design_services,
-                    color: Colors.orange,
-                  ),
-                  ProfessionCard(
-                    title: 'Data Scientist',
-                    status: 'Coming Soon',
-                    icon: Icons.analytics,
-                    color: Colors.orange,
-                  ),
-                  ProfessionCard(
-                    title: 'Mobile Developer',
-                    status: 'Coming Soon',
-                    icon: Icons.phone_android,
-                    color: Colors.orange,
-                  ),
-                  ProfessionCard(
-                    title: 'DevOps Engineer',
-                    status: 'Coming Soon',
-                    icon: Icons.settings,
-                    color: Colors.orange,
-                  ),
-                ],
-              ),
+              child: Obx(() => GridView.count(
+                    crossAxisCount: 2, // 2 columns
+                    crossAxisSpacing: 16,
+                    mainAxisSpacing: 16,
+                    childAspectRatio: 1.1, // Adjust as needed for card height
+                    children:
+                        professionController.professions.map((profession) {
+                      return ProfessionCard(
+                        title: profession['title'],
+                        status: profession['status'],
+                        icon: _getIconData(profession['icon']),
+                        color: _getColor(profession['color']),
+                      );
+                    }).toList(),
+                  )),
             ),
             const SizedBox(height: 20),
             const Center(
@@ -107,45 +98,37 @@ class HomeScreen extends StatelessWidget {
       ),
     );
   }
-}
 
-class TechnologyCategoriesScreen extends StatelessWidget {
-  final String profession;
-  const TechnologyCategoriesScreen({super.key, required this.profession});
-
-  @override
-  Widget build(BuildContext context) {
-    List<String> categories = [];
-    if (profession == 'Frontend Developer') {
-      categories = ['HTML', 'CSS', 'JavaScript', 'Frameworks', 'Tools'];
-    } else if (profession == 'Backend Developer') {
-      categories = ['Node.js', 'Python', 'Databases', 'Server', 'Tools'];
+  // Helper methods to convert string to IconData and Color
+  IconData _getIconData(String iconName) {
+    switch (iconName) {
+      case 'web':
+        return Icons.web;
+      case 'storage':
+        return Icons.storage;
+      case 'design_services':
+        return Icons.design_services;
+      case 'analytics':
+        return Icons.analytics;
+      case 'phone_android':
+        return Icons.phone_android;
+      case 'settings':
+        return Icons.settings;
+      default:
+        return Icons.help_outline;
     }
-    // Add more professions and their categories here
+  }
 
-    return Scaffold(
-      appBar: AppBar(
-        title: Text('$profession - Categories'),
-      ),
-      body: ListView.builder(
-        itemCount: categories.length,
-        itemBuilder: (context, index) {
-          return ListTile(
-            title: Text(categories[index]),
-            onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => PromptScreen(
-                    profession: profession,
-                    category: categories[index],
-                  ),
-                ),
-              );
-            },
-          );
-        },
-      ),
-    );
+  Color _getColor(String colorName) {
+    switch (colorName) {
+      case 'green':
+        return Colors.green;
+      case 'orange':
+        return Colors.orange;
+      case 'blue':
+        return Colors.blue;
+      default:
+        return Colors.grey;
+    }
   }
 }

@@ -1,4 +1,6 @@
-// lib/modals/tech_guide_response.dart
+import 'package:firebaseproject/models/doc_link_model.dart';
+import 'package:firebaseproject/models/tech_source_model.dart';
+import 'package:firebaseproject/models/version_info.dart';
 
 class TechGuideResponse {
   final String mainContent;
@@ -12,6 +14,33 @@ class TechGuideResponse {
     required this.documentationLinks,
     this.versionDetails = const [],
   });
+
+  factory TechGuideResponse.fromJson(Map<String, dynamic> json) {
+    return TechGuideResponse(
+      mainContent: json['mainContent'] ?? '',
+      sources: (json['sources'] as List?)
+              ?.map((e) => TechSource.fromJson(e))
+              .toList() ??
+          [],
+      documentationLinks: (json['documentationLinks'] as List?)
+              ?.map((e) => DocLink.fromJson(e))
+              .toList() ??
+          [],
+      versionDetails: (json['versionDetails'] as List?)
+              ?.map((e) => VersionInfo.fromJson(e))
+              .toList() ??
+          [],
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'mainContent': mainContent,
+      'sources': sources.map((e) => e.toJson()).toList(),
+      'documentationLinks': documentationLinks.map((e) => e.toJson()).toList(),
+      'versionDetails': versionDetails.map((e) => e.toJson()).toList(),
+    };
+  }
 
   factory TechGuideResponse.fromRawResponse(String rawResponse) {
     // Check if the response has sources and documentation sections
@@ -175,34 +204,6 @@ class TechGuideResponse {
       versionDetails: versionDetails,
     );
   }
-}
-
-class TechSource {
-  final String name;
-  final String url;
-
-  TechSource({required this.name, required this.url});
-}
-
-class DocLink {
-  final String name;
-  final String url;
-
-  DocLink({required this.name, required this.url});
-}
-
-class VersionInfo {
-  final String technology;
-  final String version;
-  final String releaseDate;
-  final String additionalInfo;
-
-  VersionInfo({
-    required this.technology,
-    required this.version,
-    this.releaseDate = '',
-    this.additionalInfo = '',
-  });
 }
 
 // Helper method to extract release date from version string
