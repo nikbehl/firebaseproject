@@ -42,6 +42,9 @@ class QuizScreen extends StatelessWidget {
                     ),
                     TextButton(
                       onPressed: () {
+                        // Clear quiz state before exiting
+                        quizController.resetQuiz();
+
                         Get.back(); // Close dialog
                         Get.back(); // Go back to quiz level screen
                       },
@@ -55,6 +58,20 @@ class QuizScreen extends StatelessWidget {
         ],
       ),
       body: Obx(() {
+        // Check if we have questions loaded
+        if (quizController.questions.isEmpty) {
+          return const Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                CircularProgressIndicator(),
+                SizedBox(height: 16),
+                Text('Loading questions...'),
+              ],
+            ),
+          );
+        }
+
         // Check if quiz is completed
         if (quizController.quizCompleted.value) {
           // Navigate to results screen
@@ -65,212 +82,208 @@ class QuizScreen extends StatelessWidget {
                   level: level,
                 ));
           });
+
+          // Show loading indicator while navigating
+          return const Center(child: CircularProgressIndicator());
         }
 
-        // If questions are available
-        if (quizController.questions.isNotEmpty) {
-          final currentQuestion = quizController
-              .questions[quizController.currentQuestionIndex.value];
+        // Get current question
+        final currentQuestion =
+            quizController.questions[quizController.currentQuestionIndex.value];
 
-          return Column(
-            children: [
-              // Progress indicator
-              LinearProgressIndicator(
-                value: (quizController.currentQuestionIndex.value + 1) /
-                    quizController.questions.length,
-                backgroundColor: Colors.grey.shade200,
-                valueColor: AlwaysStoppedAnimation<Color>(
-                  Colors.deepPurple,
-                ),
+        return Column(
+          children: [
+            // Progress indicator
+            LinearProgressIndicator(
+              value: (quizController.currentQuestionIndex.value + 1) /
+                  quizController.questions.length,
+              backgroundColor: Colors.grey.shade200,
+              valueColor: AlwaysStoppedAnimation<Color>(
+                Colors.deepPurple,
               ),
+            ),
 
-              // Progress text
-              Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      'Question ${quizController.currentQuestionIndex.value + 1}/${quizController.questions.length}',
-                      style: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                      ),
+            // Progress text
+            Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    'Question ${quizController.currentQuestionIndex.value + 1}/${quizController.questions.length}',
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
                     ),
-                    Text(
-                      'Score: ${quizController.score.value}',
-                      style: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                      ),
+                  ),
+                  Text(
+                    'Score: ${quizController.score.value}',
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
                     ),
-                  ],
-                ),
+                  ),
+                ],
               ),
+            ),
 
-              // Question card
-              Expanded(
-                child: SingleChildScrollView(
-                  child: Padding(
-                    padding: const EdgeInsets.all(16.0),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        // Question text
+            // Question card
+            Expanded(
+              child: SingleChildScrollView(
+                child: Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Question text
+                      Card(
+                        elevation: 4,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Padding(
+                          padding: const EdgeInsets.all(16.0),
+                          child: Text(
+                            currentQuestion.question,
+                            style: const TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                      ),
+
+                      const SizedBox(height: 16),
+
+                      // Options
+                      ...List.generate(
+                        currentQuestion.options.length,
+                        (index) => Padding(
+                          padding: const EdgeInsets.only(bottom: 8.0),
+                          child: InkWell(
+                            onTap: quizController.hasAnsweredCurrentQuestion()
+                                ? null // Disable if already answered
+                                : () => quizController.answerQuestion(index),
+                            child: Card(
+                              elevation: 2,
+                              color: quizController.getOptionColor(index),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: Padding(
+                                padding: const EdgeInsets.all(16.0),
+                                child: Row(
+                                  children: [
+                                    CircleAvatar(
+                                      backgroundColor: Colors.white,
+                                      child: Text(
+                                        String.fromCharCode(
+                                            65 + index), // A, B, C, D
+                                        style: TextStyle(
+                                          color: quizController
+                                              .getOptionColor(index),
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                    ),
+                                    const SizedBox(width: 16),
+                                    Expanded(
+                                      child: Text(
+                                        currentQuestion.options[index],
+                                        style: const TextStyle(
+                                          fontSize: 16,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+
+                      const SizedBox(height: 16),
+
+                      // Explanation (shown after answering)
+                      if (quizController.hasAnsweredCurrentQuestion()) ...[
                         Card(
-                          elevation: 4,
+                          elevation: 2,
+                          color: Colors.blue.shade50,
                           shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
+                            borderRadius: BorderRadius.circular(8),
                           ),
                           child: Padding(
                             padding: const EdgeInsets.all(16.0),
-                            child: Text(
-                              currentQuestion.question,
-                              style: const TextStyle(
-                                fontSize: 18,
-                                fontWeight: FontWeight.bold,
-                              ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Text(
+                                  'Explanation:',
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 16,
+                                  ),
+                                ),
+                                const SizedBox(height: 8),
+                                Text(
+                                  currentQuestion.explanation,
+                                  style: const TextStyle(fontSize: 16),
+                                ),
+                              ],
                             ),
                           ),
                         ),
-
-                        const SizedBox(height: 16),
-
-                        // Options
-                        ...List.generate(
-                          currentQuestion.options.length,
-                          (index) => Padding(
-                            padding: const EdgeInsets.only(bottom: 8.0),
-                            child: InkWell(
-                              onTap: quizController.hasAnsweredCurrentQuestion()
-                                  ? null // Disable if already answered
-                                  : () => quizController.answerQuestion(index),
-                              child: Card(
-                                elevation: 2,
-                                color: quizController.getOptionColor(index),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(8),
-                                ),
-                                child: Padding(
-                                  padding: const EdgeInsets.all(16.0),
-                                  child: Row(
-                                    children: [
-                                      CircleAvatar(
-                                        backgroundColor: Colors.white,
-                                        child: Text(
-                                          String.fromCharCode(
-                                              65 + index), // A, B, C, D
-                                          style: TextStyle(
-                                            color: quizController
-                                                .getOptionColor(index),
-                                            fontWeight: FontWeight.bold,
-                                          ),
-                                        ),
-                                      ),
-                                      const SizedBox(width: 16),
-                                      Expanded(
-                                        child: Text(
-                                          currentQuestion.options[index],
-                                          style: const TextStyle(
-                                            fontSize: 16,
-                                          ),
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
-
-                        const SizedBox(height: 16),
-
-                        // Explanation (shown after answering)
-                        if (quizController.hasAnsweredCurrentQuestion()) ...[
-                          Card(
-                            elevation: 2,
-                            color: Colors.blue.shade50,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child: Padding(
-                              padding: const EdgeInsets.all(16.0),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  const Text(
-                                    'Explanation:',
-                                    style: TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 16,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 8),
-                                  Text(
-                                    currentQuestion.explanation,
-                                    style: const TextStyle(fontSize: 16),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                        ],
                       ],
-                    ),
+                    ],
                   ),
                 ),
               ),
+            ),
 
-              // Next button (shown after answering)
-              if (quizController.hasAnsweredCurrentQuestion() &&
-                  quizController.currentQuestionIndex.value <
-                      quizController.questions.length - 1) ...[
-                Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: ElevatedButton(
-                    onPressed: () {
-                      quizController.currentQuestionIndex.value++;
-                    },
-                    style: ElevatedButton.styleFrom(
-                      minimumSize: const Size.fromHeight(50),
-                    ),
-                    child: const Text(
-                      'Next Question',
-                      style: TextStyle(fontSize: 16),
-                    ),
+            // Next button (shown after answering)
+            if (quizController.hasAnsweredCurrentQuestion() &&
+                quizController.currentQuestionIndex.value <
+                    quizController.questions.length - 1) ...[
+              Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: ElevatedButton(
+                  onPressed: () {
+                    quizController.currentQuestionIndex.value++;
+                  },
+                  style: ElevatedButton.styleFrom(
+                    minimumSize: const Size.fromHeight(50),
+                  ),
+                  child: const Text(
+                    'Next Question',
+                    style: TextStyle(fontSize: 16),
                   ),
                 ),
-              ],
-
-              // Finish button (shown after answering the last question)
-              if (quizController.hasAnsweredCurrentQuestion() &&
-                  quizController.currentQuestionIndex.value ==
-                      quizController.questions.length - 1) ...[
-                Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: ElevatedButton(
-                    onPressed: () {
-                      quizController.quizCompleted.value = true;
-                    },
-                    style: ElevatedButton.styleFrom(
-                      minimumSize: const Size.fromHeight(50),
-                      backgroundColor: Colors.green,
-                    ),
-                    child: const Text(
-                      'Finish Quiz',
-                      style: TextStyle(fontSize: 16, color: Colors.white),
-                    ),
-                  ),
-                ),
-              ],
+              ),
             ],
-          );
-        }
 
-        // Fallback (should not reach here)
-        return const Center(
-          child: Text('No questions available'),
+            // Finish button (shown after answering the last question)
+            if (quizController.hasAnsweredCurrentQuestion() &&
+                quizController.currentQuestionIndex.value ==
+                    quizController.questions.length - 1) ...[
+              Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: ElevatedButton(
+                  onPressed: () {
+                    quizController.quizCompleted.value = true;
+                  },
+                  style: ElevatedButton.styleFrom(
+                    minimumSize: const Size.fromHeight(50),
+                    backgroundColor: Colors.green,
+                  ),
+                  child: const Text(
+                    'Finish Quiz',
+                    style: TextStyle(fontSize: 16, color: Colors.white),
+                  ),
+                ),
+              ),
+            ],
+          ],
         );
       }),
     );

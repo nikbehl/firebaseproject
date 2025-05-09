@@ -137,9 +137,6 @@ class QuizResultScreen extends StatelessWidget {
                 Expanded(
                   child: ElevatedButton.icon(
                     onPressed: () {
-                      // Reset quiz and fetch new questions
-                      quizController.resetQuiz();
-
                       // Show loading dialog
                       Get.dialog(
                         const Center(
@@ -160,6 +157,10 @@ class QuizResultScreen extends StatelessWidget {
                         barrierDismissible: false,
                       );
 
+                      // Make sure to fully reset everything
+                      quizController.questions.clear();
+                      quizController.resetQuiz();
+
                       // Fetch quiz questions
                       quizController
                           .fetchQuizQuestions(profession, category, level)
@@ -169,7 +170,7 @@ class QuizResultScreen extends StatelessWidget {
 
                         // Check if questions were loaded successfully
                         if (quizController.questions.isNotEmpty) {
-                          // Navigate to quiz screen
+                          // Navigate to quiz screen - use offAll to clear navigation stack
                           Get.offAll(() => QuizScreen(
                                 profession: profession,
                                 category: category,
@@ -183,8 +184,31 @@ class QuizResultScreen extends StatelessWidget {
                             snackPosition: SnackPosition.BOTTOM,
                             backgroundColor: Colors.red,
                             colorText: Colors.white,
+                            duration: const Duration(seconds: 5),
+                          );
+                        } else {
+                          // Generic error if no specific error message
+                          Get.snackbar(
+                            'Error',
+                            'Failed to load quiz questions. Please try again.',
+                            snackPosition: SnackPosition.BOTTOM,
+                            backgroundColor: Colors.red,
+                            colorText: Colors.white,
+                            duration: const Duration(seconds: 5),
                           );
                         }
+                      }).catchError((error) {
+                        // Close loading dialog
+                        Get.back();
+                        // Show error message
+                        Get.snackbar(
+                          'Error',
+                          'An unexpected error occurred: $error',
+                          snackPosition: SnackPosition.BOTTOM,
+                          backgroundColor: Colors.red,
+                          colorText: Colors.white,
+                          duration: const Duration(seconds: 5),
+                        );
                       });
                     },
                     icon: const Icon(Icons.refresh),
@@ -201,6 +225,10 @@ class QuizResultScreen extends StatelessWidget {
                 Expanded(
                   child: ElevatedButton.icon(
                     onPressed: () {
+                      // Clear all quiz data before going back to level screen
+                      quizController.questions.clear();
+                      quizController.resetQuiz();
+
                       // Go back to level selection
                       Get.offAll(() => QuizLevelScreen(
                             profession: profession,
@@ -222,6 +250,10 @@ class QuizResultScreen extends StatelessWidget {
             // Exit button
             ElevatedButton.icon(
               onPressed: () {
+                // Clear all quiz data before going back
+                quizController.questions.clear();
+                quizController.resetQuiz();
+
                 // Go back to prompt screen
                 Get.back();
               },

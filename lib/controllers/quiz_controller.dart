@@ -26,6 +26,8 @@ class QuizController extends GetxController {
     score.value = 0;
     quizCompleted.value = false;
     userAnswers.clear();
+    errorMessage.value = '';
+    // Important: Don't clear questions here, as they might be reused
   }
 
   // Set the selected difficulty level
@@ -36,8 +38,11 @@ class QuizController extends GetxController {
   // Fetch quiz questions from API based on profession, category, and level
   Future<void> fetchQuizQuestions(
       String profession, String category, String level) async {
+    // Set loading state
     isLoading.value = true;
     errorMessage.value = '';
+
+    // Clear previous questions (important for retries)
     questions.clear();
     resetQuiz();
 
@@ -86,6 +91,11 @@ Make sure the entire response is a properly formatted JSON array that can be par
             final String jsonString = jsonMatch.group(0) ?? '[]';
             final List<dynamic> jsonData = jsonDecode(jsonString);
 
+            // Check if we actually got questions
+            if (jsonData.isEmpty) {
+              throw Exception('No questions were returned');
+            }
+
             // Convert JSON to QuizQuestion objects
             final List<QuizQuestion> quizQuestions = jsonData
                 .map((item) => QuizQuestion(
@@ -97,14 +107,18 @@ Make sure the entire response is a properly formatted JSON array that can be par
                 .toList();
 
             // Update questions list
-            questions.value = quizQuestions;
+            questions.assignAll(quizQuestions);
 
             // Initialize userAnswers list with -1 (unanswered) for each question
-            userAnswers.value = List<int>.filled(quizQuestions.length, -1);
+            userAnswers.assignAll(List<int>.filled(quizQuestions.length, -1));
+
+            // Log successful question loading
+            print('Successfully loaded ${questions.length} questions');
           } else {
             throw Exception('Could not parse JSON data from response');
           }
         } catch (e) {
+          print('Error parsing quiz data: $e');
           errorMessage.value = 'Error parsing quiz data: $e';
         }
       } else if (response.statusCode == 401) {
@@ -115,8 +129,10 @@ Make sure the entire response is a properly formatted JSON array that can be par
             'Error ${response.statusCode}: ${response.reasonPhrase}';
       }
     } catch (e) {
+      print('Error during API call: $e');
       errorMessage.value = 'Error during API call: $e';
     } finally {
+      // Always update loading state when done
       isLoading.value = false;
     }
   }
@@ -148,11 +164,13 @@ Make sure the entire response is a properly formatted JSON array that can be par
 
   // Check if user has answered current question
   bool hasAnsweredCurrentQuestion() {
+    if (currentQuestionIndex.value >= userAnswers.length) return false;
     return userAnswers[currentQuestionIndex.value] != -1;
   }
 
   // Get user's answer for current question
   int getUserAnswerForCurrentQuestion() {
+    if (currentQuestionIndex.value >= userAnswers.length) return -1;
     return userAnswers[currentQuestionIndex.value];
   }
 

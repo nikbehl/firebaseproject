@@ -18,6 +18,9 @@ class QuizLevelScreen extends StatelessWidget {
     // Get the quiz controller
     final quizController = Get.find<QuizController>();
 
+    // Reset quiz state when entering level selection
+    quizController.resetQuiz();
+
     return Scaffold(
       appBar: AppBar(
         title: Text('$profession - $category Quiz'),
@@ -135,6 +138,7 @@ class QuizLevelScreen extends StatelessWidget {
 
   // Method to start quiz with selected level
   void _startQuiz(QuizController controller, String level) {
+    // Set the selected level in the controller
     controller.setLevel(level);
 
     // Show loading dialog
@@ -157,10 +161,18 @@ class QuizLevelScreen extends StatelessWidget {
       barrierDismissible: false,
     );
 
+    // Explicitly clear previous quiz data before fetching new questions
+    controller.questions.clear();
+    controller.resetQuiz();
+
     // Fetch quiz questions
     controller.fetchQuizQuestions(profession, category, level).then((_) {
       // Close loading dialog
       Get.back();
+
+      // Debugging output to see current state
+      print('Questions loaded: ${controller.questions.length}');
+      print('Error message: ${controller.errorMessage.value}');
 
       // Check if questions were loaded successfully
       if (controller.questions.isNotEmpty) {
@@ -178,8 +190,31 @@ class QuizLevelScreen extends StatelessWidget {
           snackPosition: SnackPosition.BOTTOM,
           backgroundColor: Colors.red,
           colorText: Colors.white,
+          duration: const Duration(seconds: 5),
+        );
+      } else {
+        // Generic error if no specific error message but no questions loaded
+        Get.snackbar(
+          'Error',
+          'Failed to load quiz questions. Please try again.',
+          snackPosition: SnackPosition.BOTTOM,
+          backgroundColor: Colors.red,
+          colorText: Colors.white,
+          duration: const Duration(seconds: 5),
         );
       }
+    }).catchError((error) {
+      // Close loading dialog in case of error
+      Get.back();
+      // Show error message
+      Get.snackbar(
+        'Error',
+        'An unexpected error occurred: $error',
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+        duration: const Duration(seconds: 5),
+      );
     });
   }
 }
