@@ -183,6 +183,7 @@ class QuizLevelScreen extends StatelessWidget {
               level: level,
             ));
       } else if (controller.errorMessage.isNotEmpty) {
+        print(controller.errorMessage.value);
         // Show error message
         Get.snackbar(
           'Error',

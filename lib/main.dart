@@ -1,10 +1,11 @@
+import 'package:firebaseproject/controllers/activity_tracking_controller.dart';
 import 'package:firebaseproject/controllers/category_controller.dart';
 import 'package:firebaseproject/controllers/job_controller.dart';
 import 'package:firebaseproject/controllers/profession_controller.dart';
 import 'package:firebaseproject/controllers/prompt_controller.dart';
 import 'package:firebaseproject/controllers/quiz_controller.dart';
 import 'package:firebaseproject/controllers/tech_guide_controller.dart';
-import 'package:firebaseproject/screens/tech_category_screen.dart';
+import 'package:firebaseproject/screens/acitivity_dashboard.dart';
 import 'package:firebaseproject/utils/profession_card.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -27,7 +28,68 @@ class MyApp extends StatelessWidget {
         useMaterial3: true,
       ),
       initialBinding: AppBindings(),
-      home: const HomeScreen(),
+      home: const SplashScreen(),
+    );
+  }
+}
+
+// Simple splash screen that transitions to the activity dashboard
+class SplashScreen extends StatefulWidget {
+  const SplashScreen({super.key});
+
+  @override
+  State<SplashScreen> createState() => _SplashScreenState();
+}
+
+class _SplashScreenState extends State<SplashScreen> {
+  @override
+  void initState() {
+    super.initState();
+
+    // Wait for 2 seconds then navigate to activity dashboard or home
+    Future.delayed(const Duration(seconds: 2), () {
+      final activityController = Get.find<ActivityTrackingController>();
+
+      // Navigate to activity dashboard or home screen
+      // You can add logic here to determine if it's the user's first time
+      // or if they should see the dashboard based on time since last visit
+      Get.to(() => const ActivityDashboardScreen());
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.code,
+              size: 80,
+              color: Colors.deepPurple,
+            ),
+            const SizedBox(height: 24),
+            const Text(
+              'Tech Guide',
+              style: TextStyle(
+                fontSize: 28,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Your learning companion',
+              style: TextStyle(
+                fontSize: 16,
+                color: Colors.grey.shade600,
+              ),
+            ),
+            const SizedBox(height: 24),
+            const CircularProgressIndicator(),
+          ],
+        ),
+      ),
     );
   }
 }
@@ -43,6 +105,9 @@ class AppBindings extends Bindings {
     Get.put(TechGuideController());
     Get.put(QuizController());
     Get.put(JobController());
+
+    // Register the activity tracking controller
+    Get.put(ActivityTrackingController());
   }
 }
 
@@ -58,6 +123,16 @@ class HomeScreen extends StatelessWidget {
       appBar: AppBar(
         title: const Text('Tech Guide'),
         centerTitle: true,
+        actions: [
+          // Add button to access activity dashboard from home screen
+          IconButton(
+            icon: const Icon(Icons.bar_chart),
+            tooltip: 'Activity Dashboard',
+            onPressed: () {
+              Get.to(() => const ActivityDashboardScreen());
+            },
+          ),
+        ],
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),

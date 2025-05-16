@@ -1,4 +1,6 @@
+import 'package:firebaseproject/controllers/activity_tracking_controller.dart';
 import 'package:firebaseproject/controllers/quiz_controller.dart';
+import 'package:firebaseproject/screens/acitivity_dashboard.dart';
 import 'package:firebaseproject/screens/quiz_level_screen.dart';
 import 'package:firebaseproject/screens/quiz_screen.dart';
 import 'package:flutter/material.dart';
@@ -21,8 +23,14 @@ class QuizResultScreen extends StatelessWidget {
     // Get the quiz controller
     final quizController = Get.find<QuizController>();
 
+    // Get the activity tracking controller
+    final activityController = Get.find<ActivityTrackingController>();
+
     // Calculate score percentage
     final double scorePercentage = quizController.getScorePercentage();
+
+    // Record the quiz activity
+    _recordQuizActivity(activityController, quizController, scorePercentage);
 
     // Determine result message and color based on score
     String resultMessage;
@@ -265,6 +273,16 @@ class QuizResultScreen extends StatelessWidget {
                 foregroundColor: Colors.black87,
               ),
             ),
+
+            // View Activity Dashboard button
+            const SizedBox(height: 16),
+            TextButton.icon(
+              onPressed: () {
+                Get.off(() => const ActivityDashboardScreen());
+              },
+              icon: const Icon(Icons.bar_chart),
+              label: const Text('View Activity Dashboard'),
+            ),
           ],
         ),
       ),
@@ -294,6 +312,18 @@ class QuizResultScreen extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+
+  // Helper method to record quiz activity
+  void _recordQuizActivity(ActivityTrackingController activityController,
+      QuizController quizController, double scorePercentage) {
+    // Record the activity
+    activityController.recordQuizActivity(
+      profession,
+      category,
+      level,
+      scorePercentage,
     );
   }
 }
