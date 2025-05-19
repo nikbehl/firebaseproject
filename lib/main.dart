@@ -11,6 +11,9 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 void main() {
+  // Ensure Flutter is initialized
+  WidgetsFlutterBinding.ensureInitialized();
+
   runApp(const MyApp());
 }
 
@@ -47,13 +50,15 @@ class _SplashScreenState extends State<SplashScreen> {
     super.initState();
 
     // Wait for 2 seconds then navigate to activity dashboard or home
-    Future.delayed(const Duration(seconds: 2), () {
+    Future.delayed(const Duration(seconds: 2), () async {
       final activityController = Get.find<ActivityTrackingController>();
 
-      // Navigate to activity dashboard or home screen
-      // You can add logic here to determine if it's the user's first time
-      // or if they should see the dashboard based on time since last visit
-      Get.to(() => const ActivityDashboardScreen());
+      // Make sure activity data is loaded before navigating
+      await activityController.loadActivities();
+      activityController.updateStats();
+
+      // Navigate to activity dashboard
+      Get.off(() => const ActivityDashboardScreen());
     });
   }
 
@@ -106,8 +111,9 @@ class AppBindings extends Bindings {
     Get.put(QuizController());
     Get.put(JobController());
 
-    // Register the activity tracking controller
-    Get.put(ActivityTrackingController());
+    // Register the activity tracking controller as permanent
+    // This ensures it stays alive throughout the app lifecycle
+    Get.put(ActivityTrackingController(), permanent: true);
   }
 }
 
@@ -128,7 +134,11 @@ class HomeScreen extends StatelessWidget {
           IconButton(
             icon: const Icon(Icons.bar_chart),
             tooltip: 'Activity Dashboard',
-            onPressed: () {
+            onPressed: () async {
+              // Refresh activity data before navigating
+              final activityController = Get.find<ActivityTrackingController>();
+              await activityController.refreshData();
+
               Get.to(() => const ActivityDashboardScreen());
             },
           ),

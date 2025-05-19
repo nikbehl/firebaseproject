@@ -172,6 +172,7 @@ class QuizLevelScreen extends StatelessWidget {
 
       // Debugging output to see current state
       print('Questions loaded: ${controller.questions.length}');
+      print("+++++++++++++++++++++++++++++");
       print('Error message: ${controller.errorMessage.value}');
 
       // Check if questions were loaded successfully

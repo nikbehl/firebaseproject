@@ -13,10 +13,20 @@ class ActivityTrackingController extends GetxController {
   final RxString totalQuizzes = '0'.obs;
   final RxDouble averageScore = 0.0.obs;
 
+  // Flag to avoid loading data multiple times
+  final RxBool _isLoadingData = false.obs;
+
   @override
   void onInit() {
     super.onInit();
     loadActivities();
+  }
+
+  @override
+  void onReady() {
+    super.onReady();
+    // Make sure stats are updated when the controller is ready
+    _updateStats();
   }
 
   // Public method to update stats that can be called from outside the controller
@@ -26,6 +36,11 @@ class ActivityTrackingController extends GetxController {
 
   // Load quiz activities from local storage
   Future<void> loadActivities() async {
+    // If already loading, avoid duplicate calls
+    if (_isLoadingData.value) return;
+
+    _isLoadingData.value = true;
+
     try {
       final prefs = await SharedPreferences.getInstance();
       final activitiesJson = prefs.getStringList('quiz_activities') ?? [];
@@ -38,6 +53,8 @@ class ActivityTrackingController extends GetxController {
       _updateStats();
     } catch (e) {
       print('Error loading activities: $e');
+    } finally {
+      _isLoadingData.value = false;
     }
   }
 
@@ -49,6 +66,9 @@ class ActivityTrackingController extends GetxController {
           activities.map((activity) => jsonEncode(activity.toJson())).toList();
 
       await prefs.setStringList('quiz_activities', activitiesJson);
+
+      // Update stats after saving
+      _updateStats();
     } catch (e) {
       print('Error saving activities: $e');
     }
@@ -272,9 +292,7 @@ class ActivityTrackingController extends GetxController {
     // Consider last 12 months
     for (int i = 0; i < 12; i++) {
       final month = now.month - i <= 0 ? now.month - i + 12 : now.month - i;
-
       final year = now.month - i <= 0 ? now.year - 1 : now.year;
-
       final key = '$year-${month.toString().padLeft(2, '0')}';
       monthlySummaries[key] = [];
     }
@@ -326,5 +344,11 @@ class ActivityTrackingController extends GetxController {
     summaries.sort((a, b) => b.date.compareTo(a.date));
 
     return summaries;
+  }
+
+  // Force refresh all data from storage and update UI
+  Future<void> refreshData() async {
+    await loadActivities();
+    _updateStats();
   }
 }

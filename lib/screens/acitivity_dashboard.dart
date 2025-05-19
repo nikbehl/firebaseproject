@@ -6,14 +6,62 @@ import 'package:firebaseproject/utils/monthly_activity_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
-class ActivityDashboardScreen extends StatelessWidget {
+class ActivityDashboardScreen extends StatefulWidget {
   const ActivityDashboardScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    // Get the activity tracking controller
-    final activityController = Get.find<ActivityTrackingController>();
+  State<ActivityDashboardScreen> createState() =>
+      _ActivityDashboardScreenState();
+}
 
+class _ActivityDashboardScreenState extends State<ActivityDashboardScreen>
+    with WidgetsBindingObserver {
+  // Get the activity tracking controller
+  final ActivityTrackingController activityController =
+      Get.find<ActivityTrackingController>();
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    // Force an immediate refresh when screen initializes
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _refreshActivityData();
+    });
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // Refresh when dependencies change - useful when returning to this screen
+    _refreshActivityData();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    // When app returns to the foreground, refresh data
+    if (state == AppLifecycleState.resumed) {
+      _refreshActivityData();
+    }
+  }
+
+  @override
+  void dispose() {
+    // Unregister the observer when this screen is disposed
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  // Refresh activity data from storage and update stats
+  Future<void> _refreshActivityData() async {
+    print("Refreshing activity data...");
+    await activityController.loadActivities();
+    activityController.updateStats();
+    print("Heatmap data after refresh: ${activityController.heatmapData}");
+  }
+
+  @override
+  Widget build(BuildContext context) {
     // Calculate date range for heat map
     final now = DateTime.now();
     final endDate = DateTime(now.year, now.month, now.day);
@@ -23,64 +71,119 @@ class ActivityDashboardScreen extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Activity Dashboard'),
+        actions: [
+          // Add refresh button
+          IconButton(
+            icon: const Icon(Icons.refresh),
+            tooltip: 'Refresh data',
+            onPressed: _refreshActivityData,
+          ),
+        ],
       ),
-      body: Obx(() => SingleChildScrollView(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Stats cards
-                _buildStatsSection(activityController),
+      body: RefreshIndicator(
+        onRefresh: () async {
+          // Pull to refresh functionality
+          await _refreshActivityData();
+          return Future.value(); // Explicitly return a completed Future
+        },
+        child: Obx(() => SingleChildScrollView(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Stats cards
+                  _buildStatsSection(activityController),
 
-                const SizedBox(height: 24),
+                  const SizedBox(height: 24),
 
-                // Heat map section
-                _buildHeatMapSection(
-                  context,
-                  activityController,
-                  startDate,
-                  endDate,
-                ),
+                  // Heat map section
+                  _buildHeatMapSection(
+                    context,
+                    activityController,
+                    startDate,
+                    endDate,
+                  ),
 
-                const SizedBox(height: 32),
+                  const SizedBox(height: 32),
 
-                // Monthly activity section
-                _buildMonthlyActivitySection(activityController),
+                  // Monthly activity section
+                  _buildMonthlyActivitySection(activityController),
 
-                const SizedBox(height: 24),
+                  const SizedBox(height: 24),
 
-                // Continue button
-                Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  child: ElevatedButton(
-                    onPressed: () {
-                      Get.to(HomeScreen());
-                    },
-                    style: ElevatedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(vertical: 16),
-                      backgroundColor: Colors.deepPurple,
-                      foregroundColor: Colors.white,
-                    ),
-                    child: const Text(
-                      'Continue to App',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
+                  // Continue button
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    child: ElevatedButton(
+                      onPressed: () {
+                        // Ensure data is saved before navigating
+                        activityController.saveActivities();
+                        Get.off(() =>
+                            const HomeScreen()); // Use Get.off instead of Get.to to replace the current screen
+                      },
+                      style: ElevatedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        backgroundColor: Colors.deepPurple,
+                        foregroundColor: Colors.white,
+                      ),
+                      child: const Text(
+                        'Continue to App',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                     ),
                   ),
+                ],
+              ),
+            )),
+      ),
+      // Add a floating action button for testing if needed
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {
+          // Show a dialog with options
+          Get.dialog(
+            AlertDialog(
+              title: const Text('Dashboard Options'),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  ListTile(
+                    leading: const Icon(Icons.refresh),
+                    title: const Text('Refresh Data'),
+                    onTap: () async {
+                      Get.back();
+                      await _refreshActivityData();
+                      Get.snackbar(
+                        'Refreshed',
+                        'Activity data has been refreshed',
+                        snackPosition: SnackPosition.BOTTOM,
+                      );
+                    },
+                  ),
+                  ListTile(
+                    leading: const Icon(Icons.add),
+                    title: const Text('Add Test Data'),
+                    onTap: () {
+                      Get.back();
+                      _addMockData(activityController);
+                    },
+                  ),
+                ],
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Get.back(),
+                  child: const Text('Cancel'),
                 ),
               ],
             ),
-          )),
-      // floatingActionButton: FloatingActionButton(
-      //   onPressed: () {
-      //     _addMockData(activityController);
-      //   },
-      //   tooltip: 'Add test data',
-      //   child: const Icon(Icons.add),
-      // ),
+          );
+        },
+        child: const Icon(Icons.more_vert),
+      ),
     );
   }
 
@@ -306,26 +409,6 @@ class ActivityDashboardScreen extends StatelessWidget {
               ? 'Advanced'
               : (random > 30 ? 'Intermediate' : 'Basic'),
           score: 60 + (random % 40), // Score between 60-99
-        ),
-      );
-    }
-
-    // Add some quizzes from 2-6 months ago (sparse)
-    for (int i = 40; i < 180; i += 10) {
-      if (i % 20 == 0) continue; // Skip some days for variety
-
-      final date = now.subtract(Duration(days: i));
-      final random = date.day * date.month % 100;
-
-      controller.activities.add(
-        QuizActivity(
-          date: date,
-          profession: random > 50 ? 'Frontend Developer' : 'Backend Developer',
-          category: random > 50 ? 'HTML' : 'Databases',
-          level: random > 70
-              ? 'Advanced'
-              : (random > 30 ? 'Intermediate' : 'Basic'),
-          score: 55 + (random % 45), // Score between 55-99
         ),
       );
     }

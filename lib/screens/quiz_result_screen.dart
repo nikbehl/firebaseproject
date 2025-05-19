@@ -145,79 +145,7 @@ class QuizResultScreen extends StatelessWidget {
                 Expanded(
                   child: ElevatedButton.icon(
                     onPressed: () {
-                      // Show loading dialog
-                      Get.dialog(
-                        const Center(
-                          child: Card(
-                            child: Padding(
-                              padding: EdgeInsets.all(16.0),
-                              child: Column(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  CircularProgressIndicator(),
-                                  SizedBox(height: 16),
-                                  Text('Generating new questions...'),
-                                ],
-                              ),
-                            ),
-                          ),
-                        ),
-                        barrierDismissible: false,
-                      );
-
-                      // Make sure to fully reset everything
-                      quizController.questions.clear();
-                      quizController.resetQuiz();
-
-                      // Fetch quiz questions
-                      quizController
-                          .fetchQuizQuestions(profession, category, level)
-                          .then((_) {
-                        // Close loading dialog
-                        Get.back();
-
-                        // Check if questions were loaded successfully
-                        if (quizController.questions.isNotEmpty) {
-                          // Navigate to quiz screen - use offAll to clear navigation stack
-                          Get.offAll(() => QuizScreen(
-                                profession: profession,
-                                category: category,
-                                level: level,
-                              ));
-                        } else if (quizController.errorMessage.isNotEmpty) {
-                          // Show error message
-                          Get.snackbar(
-                            'Error',
-                            quizController.errorMessage.value,
-                            snackPosition: SnackPosition.BOTTOM,
-                            backgroundColor: Colors.red,
-                            colorText: Colors.white,
-                            duration: const Duration(seconds: 5),
-                          );
-                        } else {
-                          // Generic error if no specific error message
-                          Get.snackbar(
-                            'Error',
-                            'Failed to load quiz questions. Please try again.',
-                            snackPosition: SnackPosition.BOTTOM,
-                            backgroundColor: Colors.red,
-                            colorText: Colors.white,
-                            duration: const Duration(seconds: 5),
-                          );
-                        }
-                      }).catchError((error) {
-                        // Close loading dialog
-                        Get.back();
-                        // Show error message
-                        Get.snackbar(
-                          'Error',
-                          'An unexpected error occurred: $error',
-                          snackPosition: SnackPosition.BOTTOM,
-                          backgroundColor: Colors.red,
-                          colorText: Colors.white,
-                          duration: const Duration(seconds: 5),
-                        );
-                      });
+                      _retryQuiz(quizController);
                     },
                     icon: const Icon(Icons.refresh),
                     label: const Text('Try Again'),
@@ -278,7 +206,12 @@ class QuizResultScreen extends StatelessWidget {
             const SizedBox(height: 16),
             TextButton.icon(
               onPressed: () {
-                Get.off(() => const ActivityDashboardScreen());
+                // Ensure data is saved before navigating
+                activityController.saveActivities();
+                activityController.updateStats();
+
+                // Navigate to dashboard and remove previous screens from stack
+                Get.offAll(() => const ActivityDashboardScreen());
               },
               icon: const Icon(Icons.bar_chart),
               label: const Text('View Activity Dashboard'),
@@ -287,6 +220,81 @@ class QuizResultScreen extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  // Helper method to retry quiz
+  void _retryQuiz(QuizController quizController) {
+    // Show loading dialog
+    Get.dialog(
+      const Center(
+        child: Card(
+          child: Padding(
+            padding: EdgeInsets.all(16.0),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                CircularProgressIndicator(),
+                SizedBox(height: 16),
+                Text('Generating new questions...'),
+              ],
+            ),
+          ),
+        ),
+      ),
+      barrierDismissible: false,
+    );
+
+    // Make sure to fully reset everything
+    quizController.questions.clear();
+    quizController.resetQuiz();
+
+    // Fetch quiz questions
+    quizController.fetchQuizQuestions(profession, category, level).then((_) {
+      // Close loading dialog
+      Get.back();
+
+      // Check if questions were loaded successfully
+      if (quizController.questions.isNotEmpty) {
+        // Navigate to quiz screen - use offAll to clear navigation stack
+        Get.offAll(() => QuizScreen(
+              profession: profession,
+              category: category,
+              level: level,
+            ));
+      } else if (quizController.errorMessage.isNotEmpty) {
+        // Show error message
+        Get.snackbar(
+          'Error',
+          quizController.errorMessage.value,
+          snackPosition: SnackPosition.BOTTOM,
+          backgroundColor: Colors.red,
+          colorText: Colors.white,
+          duration: const Duration(seconds: 5),
+        );
+      } else {
+        // Generic error if no specific error message
+        Get.snackbar(
+          'Error',
+          'Failed to load quiz questions. Please try again.',
+          snackPosition: SnackPosition.BOTTOM,
+          backgroundColor: Colors.red,
+          colorText: Colors.white,
+          duration: const Duration(seconds: 5),
+        );
+      }
+    }).catchError((error) {
+      // Close loading dialog
+      Get.back();
+      // Show error message
+      Get.snackbar(
+        'Error',
+        'An unexpected error occurred: $error',
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+        duration: const Duration(seconds: 5),
+      );
+    });
   }
 
   // Helper method to build info rows
@@ -316,6 +324,7 @@ class QuizResultScreen extends StatelessWidget {
   }
 
   // Helper method to record quiz activity
+// In QuizResultScreen
   void _recordQuizActivity(ActivityTrackingController activityController,
       QuizController quizController, double scorePercentage) {
     // Record the activity
@@ -325,5 +334,12 @@ class QuizResultScreen extends StatelessWidget {
       level,
       scorePercentage,
     );
+
+    // Explicitly save and update stats after recording
+    activityController.saveActivities();
+    activityController.updateStats();
+
+    // For debugging - print current heatmap data
+    print("Current heatmap data: ${activityController.heatmapData}");
   }
 }
