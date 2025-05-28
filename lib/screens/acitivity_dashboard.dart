@@ -97,14 +97,14 @@ class _ActivityDashboardScreenState extends State<ActivityDashboardScreen>
                   const SizedBox(height: 24),
 
                   // Heat map section
-                  _buildHeatMapSection(
-                    context,
-                    activityController,
-                    startDate,
-                    endDate,
-                  ),
+                  // _buildHeatMapSection(
+                  //   context,
+                  //   activityController,
+                  //   startDate,
+                  //   endDate,
+                  // ),
 
-                  const SizedBox(height: 32),
+                  // const SizedBox(height: 32),
 
                   // Monthly activity section
                   _buildMonthlyActivitySection(activityController),
@@ -297,49 +297,49 @@ class _ActivityDashboardScreenState extends State<ActivityDashboardScreen>
   }
 
   // Heat map section
-  Widget _buildHeatMapSection(
-    BuildContext context,
-    ActivityTrackingController controller,
-    DateTime startDate,
-    DateTime endDate,
-  ) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            const Text(
-              'Activity Calendar',
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            Text(
-              'Longest streak: ${controller.longestStreak} days',
-              style: TextStyle(
-                fontSize: 14,
-                color: Colors.grey.shade700,
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 16),
-        Card(
-          elevation: 2,
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: QuizHeatMap(
-              data: controller.heatmapData,
-              startDate: startDate,
-              endDate: endDate,
-            ),
-          ),
-        ),
-      ],
-    );
-  }
+  // Widget _buildHeatMapSection(
+  //   BuildContext context,
+  //   ActivityTrackingController controller,
+  //   DateTime startDate,
+  //   DateTime endDate,
+  // ) {
+  //   return Column(
+  //     crossAxisAlignment: CrossAxisAlignment.start,
+  //     children: [
+  //       Row(
+  //         mainAxisAlignment: MainAxisAlignment.spaceBetween,
+  //         children: [
+  //           const Text(
+  //             'Activity Calendar',
+  //             style: TextStyle(
+  //               fontSize: 20,
+  //               fontWeight: FontWeight.bold,
+  //             ),
+  //           ),
+  //           Text(
+  //             'Longest streak: ${controller.longestStreak} days',
+  //             style: TextStyle(
+  //               fontSize: 14,
+  //               color: Colors.grey.shade700,
+  //             ),
+  //           ),
+  //         ],
+  //       ),
+  //       const SizedBox(height: 16),
+  //       Card(
+  //         elevation: 2,
+  //         child: Padding(
+  //           padding: const EdgeInsets.all(16),
+  //           child: QuizHeatMap(
+  //             data: controller.heatmapData,
+  //             startDate: startDate,
+  //             endDate: endDate,
+  //           ),
+  //         ),
+  //       ),
+  //     ],
+  //   );
+  // }
 
   // Monthly activity section
   Widget _buildMonthlyActivitySection(ActivityTrackingController controller) {

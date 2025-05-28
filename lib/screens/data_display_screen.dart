@@ -29,6 +29,36 @@ class DataDisplayScreen extends StatelessWidget {
     }
   }
 
+  // Method to remove special characters from text
+  String _removeSpecialCharacters(String text) {
+    // Remove common markdown/special characters while preserving basic punctuation
+    return text
+        .replaceAll(
+            RegExp(r'[*_~`#\[\]{}|\\]'), '') // Remove markdown characters
+        .replaceAll(
+            RegExp(r'^\s*[-•]\s*', multiLine: true), '') // Remove bullet points
+        .replaceAll(RegExp(r'^\s*\d+\.\s*', multiLine: true),
+            '') // Remove numbered lists
+        .replaceAll(
+            RegExp(r'\n\s*\n'), '\n\n') // Clean up excessive line breaks
+        .replaceAll(RegExp(r'[^\w\s.,!?;:()\-\n]'),
+            '') // Keep only alphanumeric, basic punctuation, and newlines
+        .trim();
+  }
+
+  // Method to remove special characters from names (for documentation/sources)
+  String _removeSpecialCharactersFromName(String name) {
+    // Remove special characters from names while preserving spaces and basic punctuation
+    return name
+        .replaceAll(
+            RegExp(r'[*_~`#\[\]{}|\\]'), '') // Remove markdown characters
+        .replaceAll(RegExp(r'[^\w\s.,!?;:()\-&]'),
+            '') // Keep alphanumeric, spaces, and basic punctuation
+        .replaceAll(
+            RegExp(r'\s+'), ' ') // Replace multiple spaces with single space
+        .trim();
+  }
+
   @override
   Widget build(BuildContext context) {
     // Get the tech guide controller
@@ -126,12 +156,12 @@ class DataDisplayScreen extends StatelessWidget {
           return CustomScrollView(
             slivers: [
               // Sticky header with tabs
-              SliverAppBar(
-                pinned: true,
-                automaticallyImplyLeading: false,
-                backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-                title: _buildTabBar(context),
-              ),
+              // SliverAppBar(
+              //   pinned: true,
+              //   automaticallyImplyLeading: false,
+              //   backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+              //   title: _buildTabBar(context),
+              // ),
 
               // Content section
               SliverPadding(
@@ -158,9 +188,18 @@ class DataDisplayScreen extends StatelessWidget {
                             const Divider(color: Colors.deepPurple),
                             const SizedBox(height: 16),
 
-                            // Main content text
-                            SelectableText(
-                              response.mainContent,
+                            // Main content text - REPLACED SelectableText with TextField and removed special characters
+                            TextField(
+                              controller: TextEditingController(
+                                  text: _removeSpecialCharacters(
+                                      response.mainContent)),
+                              maxLines: null, // Allows multiple lines
+                              readOnly:
+                                  false, // Set to true if you want it read-only
+                              decoration: const InputDecoration(
+                                border: OutlineInputBorder(),
+                                contentPadding: EdgeInsets.all(12.0),
+                              ),
                               style: const TextStyle(fontSize: 16),
                             ),
                           ],
@@ -267,39 +306,39 @@ class DataDisplayScreen extends StatelessWidget {
   }
 
   // Build tab bar for navigation
-  Widget _buildTabBar(BuildContext context) {
-    return SingleChildScrollView(
-      scrollDirection: Axis.horizontal,
-      child: Row(
-        children: [
-          _buildTab(
-            label: 'Overview',
-            icon: Icons.info_outline,
-            isActive: true,
-            onTap: () {},
-          ),
-          _buildTab(
-            label: 'Versions',
-            icon: Icons.new_releases_outlined,
-            isActive: false,
-            onTap: () {},
-          ),
-          _buildTab(
-            label: 'Sources',
-            icon: Icons.source_outlined,
-            isActive: false,
-            onTap: () {},
-          ),
-          _buildTab(
-            label: 'Docs',
-            icon: Icons.menu_book_outlined,
-            isActive: false,
-            onTap: () {},
-          ),
-        ],
-      ),
-    );
-  }
+  // Widget _buildTabBar(BuildContext context) {
+  //   return SingleChildScrollView(
+  //     scrollDirection: Axis.horizontal,
+  //     child: Row(
+  //       children: [
+  //         _buildTab(
+  //           label: 'Overview',
+  //           icon: Icons.info_outline,
+  //           isActive: true,
+  //           onTap: () {},
+  //         ),
+  //         _buildTab(
+  //           label: 'Versions',
+  //           icon: Icons.new_releases_outlined,
+  //           isActive: false,
+  //           onTap: () {},
+  //         ),
+  //         _buildTab(
+  //           label: 'Sources',
+  //           icon: Icons.source_outlined,
+  //           isActive: false,
+  //           onTap: () {},
+  //         ),
+  //         _buildTab(
+  //           label: 'Docs',
+  //           icon: Icons.menu_book_outlined,
+  //           isActive: false,
+  //           onTap: () {},
+  //         ),
+  //       ],
+  //     ),
+  //   );
+  // }
 
   // Build single tab
   Widget _buildTab({
@@ -502,7 +541,7 @@ class DataDisplayScreen extends StatelessWidget {
                 child: Padding(
                   padding: const EdgeInsets.all(8.0),
                   child: Text(
-                    sources[index].name,
+                    _removeSpecialCharactersFromName(sources[index].name),
                     style: const TextStyle(
                       fontWeight: FontWeight.w500,
                     ),
