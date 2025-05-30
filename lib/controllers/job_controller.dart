@@ -11,7 +11,7 @@ class JobController extends GetxController {
 
   // API key (Consider using environment variables or secure storage in production)
   final String apiKey =
-      "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";
+      "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";
   final String apiUrl = "https://api.groq.com/openai/v1/chat/completions";
 
   // Fetch job listings based on profession and category

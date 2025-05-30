@@ -170,7 +170,8 @@ class DataDisplayScreen extends StatelessWidget {
                   delegate: SliverChildListDelegate([
                     // Main content
                     Card(
-                      elevation: 2,
+                      color: Colors.white,
+                      elevation: 1,
                       child: Padding(
                         padding: const EdgeInsets.all(16.0),
                         child: Column(
@@ -185,7 +186,7 @@ class DataDisplayScreen extends StatelessWidget {
                                 color: Colors.deepPurple,
                               ),
                             ),
-                            const Divider(color: Colors.deepPurple),
+
                             const SizedBox(height: 16),
 
                             // Main content text - REPLACED SelectableText with TextField and removed special characters
@@ -197,8 +198,8 @@ class DataDisplayScreen extends StatelessWidget {
                               readOnly:
                                   false, // Set to true if you want it read-only
                               decoration: const InputDecoration(
-                                border: OutlineInputBorder(),
-                                contentPadding: EdgeInsets.all(12.0),
+                                border: InputBorder.none,
+                                contentPadding: EdgeInsets.all(2.0),
                               ),
                               style: const TextStyle(fontSize: 16),
                             ),

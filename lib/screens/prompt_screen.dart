@@ -75,7 +75,38 @@ class PromptScreen extends StatelessWidget {
                               ),
                             ),
                             const SizedBox(height: 16),
+                            Wrap(
+                              spacing: 8,
+                              runSpacing: 8,
+                              children: [
+                                _buildSuggestionChip('Best practices',
+                                    textController, promptController),
+                                _buildSuggestionChip('Latest trends',
+                                    textController, promptController),
+                                _buildSuggestionChip('Getting started',
+                                    textController, promptController),
+                                _buildSuggestionChip('Advanced techniques',
+                                    textController, promptController),
+                              ],
+                            ),
 
+                            const SizedBox(height: 16),
+
+                            // "Or" text
+                            const Center(
+                              child: Text(
+                                'OR',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w500,
+                                  color: Colors.grey,
+                                ),
+                              ),
+                            ),
+
+                            const SizedBox(height: 16),
+
+                            // TextField moved here
                             TextField(
                               controller: textController,
                               decoration: const InputDecoration(
@@ -88,7 +119,6 @@ class PromptScreen extends StatelessWidget {
                               },
                             ),
                             const SizedBox(height: 16),
-
                             Obx(() => ElevatedButton(
                                   onPressed: promptController.isPromptValid()
                                       ? () {
@@ -107,23 +137,34 @@ class PromptScreen extends StatelessWidget {
                                   child: const Text('Get Information'),
                                 )),
 
-                            const SizedBox(height: 8),
+                            // TextField(
+                            //   controller: textController,
+                            //   decoration: const InputDecoration(
+                            //     hintText: 'Enter your prompt here',
+                            //     border: OutlineInputBorder(),
+                            //   ),
+                            //   maxLines: 3,
+                            //   onChanged: (value) {
+                            //     promptController.setPrompt(value);
+                            //   },
+                            // ),
+                            // const SizedBox(height: 16),
 
-                            // Prompt suggestions
-                            Wrap(
-                              spacing: 8,
-                              runSpacing: 8,
-                              children: [
-                                _buildSuggestionChip('Best practices',
-                                    textController, promptController),
-                                _buildSuggestionChip('Latest trends',
-                                    textController, promptController),
-                                _buildSuggestionChip('Getting started',
-                                    textController, promptController),
-                                _buildSuggestionChip('Advanced techniques',
-                                    textController, promptController),
-                              ],
-                            ),
+                            // // Prompt suggestions
+                            // Wrap(
+                            //   spacing: 8,
+                            //   runSpacing: 8,
+                            //   children: [
+                            //     _buildSuggestionChip('Best practices',
+                            //         textController, promptController),
+                            //     _buildSuggestionChip('Latest trends',
+                            //         textController, promptController),
+                            //     _buildSuggestionChip('Getting started',
+                            //         textController, promptController),
+                            //     _buildSuggestionChip('Advanced techniques',
+                            //         textController, promptController),
+                            //   ],
+                            // ),
                           ],
                         ),
                       ),
@@ -335,10 +376,14 @@ class PromptScreen extends StatelessWidget {
     return InputChip(
       label: Text(label),
       onPressed: () {
-        // Set the suggestion as the prompt
-        textController.text =
-            "Tell me about $label for $category in $profession";
-        promptController.setPrompt(textController.text);
+        final promptText = "Tell me about $label for $category in $profession";
+
+        // Navigate directly to data display screen with the selected prompt
+        Get.to(() => DataDisplayScreen(
+              profession: profession,
+              category: category,
+              prompt: promptText,
+            ));
       },
       backgroundColor: Colors.grey.shade200,
     );

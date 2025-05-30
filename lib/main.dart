@@ -1,3 +1,7 @@
+import 'dart:async';
+import 'dart:io';
+
+import 'package:android_intent_plus/android_intent.dart';
 import 'package:firebaseproject/controllers/activity_tracking_controller.dart';
 import 'package:firebaseproject/controllers/category_controller.dart';
 import 'package:firebaseproject/controllers/job_controller.dart';
@@ -9,6 +13,7 @@ import 'package:firebaseproject/screens/acitivity_dashboard.dart';
 import 'package:firebaseproject/utils/profession_card.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:permission_handler/permission_handler.dart';
 
 void main() {
   // Ensure Flutter is initialized
@@ -21,6 +26,7 @@ class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
   // This widget is the root of your application.
+
   @override
   Widget build(BuildContext context) {
     return GetMaterialApp(
@@ -117,8 +123,101 @@ class AppBindings extends Bindings {
   }
 }
 
-class HomeScreen extends StatelessWidget {
+final GlobalKey<NavigatorState> globalNavigatorKey =
+    GlobalKey<NavigatorState>();
+
+class PermissionProvider {
+  static PermissionStatus locationPermission = PermissionStatus.denied;
+  static bool isServiceOn = false;
+  static DialogRoute? permissionDialogRoute;
+
+  static Future<void> handleLocationPermission() async {
+    isServiceOn = await Permission.location.serviceStatus.isEnabled;
+    locationPermission = await Permission.location.status;
+
+    if (isServiceOn) {
+      switch (locationPermission) {
+        case PermissionStatus.permanentlyDenied:
+          permissionDialogRoute = myCustomDialogRoute(
+              title: "Location Service",
+              text:
+                  "To use navigation, please allow location usage in settings.",
+              buttonText: "Go To Settings",
+              onPressed: () {
+                Navigator.of(globalNavigatorKey.currentContext!).pop();
+                openAppSettings();
+              });
+          Navigator.of(globalNavigatorKey.currentContext!)
+              .push(permissionDialogRoute!);
+        case PermissionStatus.denied:
+          Permission.location.request().then((value) {
+            locationPermission = value;
+          });
+          break;
+        default:
+      }
+    } else {
+      permissionDialogRoute = myCustomDialogRoute(
+          title: "Location Service",
+          text: "To use navigation, please turn location service on.",
+          buttonText: Platform.isAndroid ? "Turn It On" : "Ok",
+          onPressed: () {
+            Navigator.of(globalNavigatorKey.currentContext!).pop();
+            if (Platform.isAndroid) {
+              const AndroidIntent intent = AndroidIntent(
+                  action: 'android.settings.LOCATION_SOURCE_SETTINGS');
+              intent.launch();
+            } else {
+              // **TODO:** ios integration
+            }
+          });
+      Navigator.of(globalNavigatorKey.currentContext!)
+          .push(permissionDialogRoute!);
+    }
+  }
+
+  // Helper method to create custom dialog route
+  static DialogRoute myCustomDialogRoute({
+    required String title,
+    required String text,
+    required String buttonText,
+    required VoidCallback onPressed,
+  }) {
+    return DialogRoute(
+      context: globalNavigatorKey.currentContext!,
+      builder: (context) => AlertDialog(
+        title: Text(title),
+        content: Text(text),
+        actions: [
+          TextButton(
+            onPressed: onPressed,
+            child: Text(buttonText),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// Home Screen Class
+class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
+
+  @override
+  State<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> {
+  @override
+  void initState() {
+    super.initState();
+    // Initialize location permissions when the screen loads
+    _initializePermissions();
+  }
+
+  Future<void> _initializePermissions() async {
+    await PermissionProvider.handleLocationPermission();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -140,6 +239,14 @@ class HomeScreen extends StatelessWidget {
               await activityController.refreshData();
 
               Get.to(() => const ActivityDashboardScreen());
+            },
+          ),
+          // Add location permission button
+          IconButton(
+            icon: const Icon(Icons.location_on),
+            tooltip: 'Check Location Permission',
+            onPressed: () async {
+              await PermissionProvider.handleLocationPermission();
             },
           ),
         ],
@@ -167,6 +274,11 @@ class HomeScreen extends StatelessWidget {
                         status: profession['status'],
                         icon: _getIconData(profession['icon']),
                         color: _getColor(profession['color']),
+                        onTap: () async {
+                          // Check location permission before navigating to profession
+                          await PermissionProvider.handleLocationPermission();
+                          // Add your navigation logic here
+                        },
                       );
                     }).toList(),
                   )),

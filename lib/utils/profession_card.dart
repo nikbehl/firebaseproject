@@ -15,6 +15,7 @@ class ProfessionCard extends StatelessWidget {
     required this.status,
     required this.icon,
     required this.color,
+    required Future<Null> Function() onTap,
   });
 
   @override
