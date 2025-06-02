@@ -13,6 +13,39 @@ class JobListingsScreen extends StatelessWidget {
     required this.category,
   });
 
+  // List of Indian states
+  final List<String> indianStates = const [
+    'Delhi',
+    'Andhra Pradesh',
+    'Arunachal Pradesh',
+    'Assam',
+    'Bihar',
+    'Chhattisgarh',
+    'Goa',
+    'Gujarat',
+    'Haryana',
+    'Himachal Pradesh',
+    'Jharkhand',
+    'Karnataka',
+    'Kerala',
+    'Madhya Pradesh',
+    'Maharashtra',
+    'Manipur',
+    'Meghalaya',
+    'Mizoram',
+    'Nagaland',
+    'Odisha',
+    'Punjab',
+    'Rajasthan',
+    'Sikkim',
+    'Tamil Nadu',
+    'Telangana',
+    'Tripura',
+    'Uttar Pradesh',
+    'Uttarakhand',
+    'West Bengal',
+  ];
+
   @override
   Widget build(BuildContext context) {
     // Get the job controller
@@ -21,36 +54,113 @@ class JobListingsScreen extends StatelessWidget {
     // Fetch jobs when the screen loads
     jobController.fetchJobs(profession, category);
 
+    // Observable for selected state
+    final selectedState = 'Delhi'.obs;
+
     return Scaffold(
       appBar: AppBar(
         title: Text('$profession Career Paths'),
       ),
-      body: Obx(() {
-        // Show loading indicator
-        if (jobController.isLoading.value) {
-          return const Center(child: CircularProgressIndicator());
-        }
-
-        // Show error message if any
-        if (jobController.errorMessage.value.isNotEmpty) {
-          return Center(child: Text(jobController.errorMessage.value));
-        }
-
-        // Show jobs if available
-        if (jobController.jobs.isNotEmpty) {
-          return ListView.builder(
+      body: Column(
+        children: [
+          // State dropdown section
+          Container(
             padding: const EdgeInsets.all(16),
-            itemCount: jobController.jobs.length,
-            itemBuilder: (context, index) {
-              final job = jobController.jobs[index];
-              return _buildJobCard(job);
-            },
-          );
-        }
+            decoration: BoxDecoration(
+              color: Colors.white,
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.grey.withOpacity(0.1),
+                  spreadRadius: 1,
+                  blurRadius: 3,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+            ),
+            child: Row(
+              children: [
+                Icon(
+                  Icons.location_on,
+                  color: Colors.blue.shade600,
+                  size: 20,
+                ),
+                const SizedBox(width: 8),
+                const Text(
+                  'Location:',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Obx(() => Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 12),
+                        decoration: BoxDecoration(
+                          border: Border.all(color: Colors.grey.shade300),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: DropdownButton<String>(
+                          value: selectedState.value,
+                          isExpanded: true,
+                          underline: const SizedBox(),
+                          icon: Icon(
+                            Icons.keyboard_arrow_down,
+                            color: Colors.grey.shade600,
+                          ),
+                          items: indianStates.map((String state) {
+                            return DropdownMenuItem<String>(
+                              value: state,
+                              child: Text(
+                                state,
+                                style: const TextStyle(fontSize: 16),
+                              ),
+                            );
+                          }).toList(),
+                          onChanged: (String? newValue) {
+                            if (newValue != null) {
+                              selectedState.value = newValue;
+                              // No functionality for now as requested
+                            }
+                          },
+                        ),
+                      )),
+                ),
+              ],
+            ),
+          ),
 
-        // Fallback (should not reach here)
-        return const Center(child: Text('No job listings available'));
-      }),
+          // Job listings section
+          Expanded(
+            child: Obx(() {
+              // Show loading indicator
+              if (jobController.isLoading.value) {
+                return const Center(child: CircularProgressIndicator());
+              }
+
+              // Show error message if any
+              if (jobController.errorMessage.value.isNotEmpty) {
+                return Center(child: Text(jobController.errorMessage.value));
+              }
+
+              // Show jobs if available
+              if (jobController.jobs.isNotEmpty) {
+                return ListView.builder(
+                  padding: const EdgeInsets.all(16),
+                  itemCount: jobController.jobs.length,
+                  itemBuilder: (context, index) {
+                    final job = jobController.jobs[index];
+                    return _buildJobCard(job);
+                  },
+                );
+              }
+
+              // Fallback (should not reach here)
+              return const Center(child: Text('No job listings available'));
+            }),
+          ),
+        ],
+      ),
       floatingActionButton: FloatingActionButton(
         onPressed: () {
           // Refresh job listings

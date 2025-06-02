@@ -319,9 +319,9 @@ class _HomeScreenState extends State<HomeScreen> {
   Color _getColor(String colorName) {
     switch (colorName) {
       case 'green':
-        return Colors.green;
+        return const Color(0xFFF77F00);
       case 'orange':
-        return Colors.orange;
+        return const Color(0xFFEAE2B7);
       case 'blue':
         return Colors.blue;
       default:
