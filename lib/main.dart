@@ -321,7 +321,7 @@ class _HomeScreenState extends State<HomeScreen> {
       case 'green':
         return const Color(0xFFF77F00);
       case 'orange':
-        return const Color(0xFFEAE2B7);
+        return const Color(0xFFBDBDBD);
       case 'blue':
         return Colors.blue;
       default:
