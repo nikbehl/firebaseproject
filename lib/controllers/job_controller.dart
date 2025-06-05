@@ -245,7 +245,12 @@ Each job should include:
 Make sure jobs are diverse and cover different levels from entry to senior positions.
 Focus on creating jobs that are specifically relevant to the $category specialization within $profession.
 
-Format your response as a JSON array with this structure for each job:
+IMPORTANT: Format your response as a valid JSON array. Make sure to:
+1. Escape all quotes within strings using backslashes
+2. Do not include any markdown formatting or code blocks
+3. Return ONLY the JSON array, nothing else
+
+Format structure for each job:
 {
   "title": "Job Title",
   "description": "Brief job description",
@@ -253,9 +258,7 @@ Format your response as a JSON array with this structure for each job:
   "salary": "Salary Range",
   "experience": "Experience Level",
   "skills": ["Skill1", "Skill2", "Skill3", "Skill4", "Skill5"]
-}
-
-Ensure the entire response is a properly formatted JSON array that can be parsed directly."""
+}"""
             }
           ],
         }),
@@ -265,88 +268,90 @@ Ensure the entire response is a properly formatted JSON array that can be parsed
         final data = jsonDecode(response.body);
         final responseMessage = data['choices'][0]['message']['content'];
 
-        // Try to extract JSON from the response
+        // Try to extract and clean JSON from the response
         try {
-          // Find JSON array in the response
-          final RegExp jsonRegex = RegExp(r'\[\s*\{.*\}\s*\]', dotAll: true);
-          final Match? jsonMatch = jsonRegex.firstMatch(responseMessage);
+          // Clean the response message
+          final cleanedJson = _cleanJsonResponse(responseMessage);
 
-          if (jsonMatch != null) {
-            final String jsonString = jsonMatch.group(0) ?? '[]';
-            final List<dynamic> jsonData = jsonDecode(jsonString);
-
-            // Convert JSON to JobModel objects with better location distribution
-            final List<JobModel> jobListings =
-                jsonData.asMap().entries.map((entry) {
-              final index = entry.key;
-              final item = entry.value;
-
-              // Smart location assignment - ensure Delhi gets more jobs
-              String assignedState;
-              String assignedCity;
-
-              if (index < 6) {
-                // First 6 jobs go to Delhi to ensure availability
-                assignedState = 'Delhi';
-                final delhiCities = stateCities['Delhi'] ?? ['New Delhi'];
-                assignedCity = delhiCities[_random.nextInt(delhiCities.length)];
-              } else {
-                // Remaining jobs distributed across other states
-                assignedState =
-                    indianStates[_random.nextInt(indianStates.length)];
-                final citiesForState =
-                    stateCities[assignedState] ?? [assignedState];
-                assignedCity =
-                    citiesForState[_random.nextInt(citiesForState.length)];
-              }
-
-              return JobModel(
-                id: 'job_${DateTime.now().millisecondsSinceEpoch}_$index',
-                title: item['title'] ?? '',
-                description: item['description'] ?? '',
-                company: item['company'] ?? '',
-                salary: item['salary'] ?? '',
-                experience: item['experience'] ?? '',
-                skills: List<String>.from(item['skills'] ?? []),
-                category: category, // Ensure category matches exactly
-                profession: profession, // Ensure profession matches exactly
-                // Location fields
-                state: assignedState,
-                city: assignedCity,
-                location: '$assignedCity, $assignedState',
-                address: '${assignedCity}, $assignedState, India',
-                // Optional fields with some random data
-                jobType: _getRandomJobType(),
-                workMode: _getRandomWorkMode(),
-                postedDate: DateTime.now().subtract(
-                  Duration(
-                      days: _random.nextInt(30)), // Posted within last 30 days
-                ),
-                isActive: true,
-                contactEmail:
-                    _generateRandomEmail(item['company'] ?? 'company'),
-              );
-            }).toList();
-
-            // Update jobs list
-            jobs.value = jobListings;
-
-            // Debug print to verify jobs are created correctly
-            print(
-                'Created ${jobListings.length} jobs for $profession - $category');
-            final delhiJobs = jobListings
-                .where((job) =>
-                    job.state?.toLowerCase() == 'delhi' ||
-                    job.city?.toLowerCase().contains('delhi') == true ||
-                    job.location?.toLowerCase().contains('delhi') == true)
-                .length;
-            print('Delhi jobs created: $delhiJobs');
-          } else {
-            throw Exception('Could not parse JSON data from response');
+          if (cleanedJson.isEmpty) {
+            throw Exception('No valid JSON found in response');
           }
+
+          final List<dynamic> jsonData = jsonDecode(cleanedJson);
+
+          if (jsonData.isEmpty) {
+            throw Exception('Empty job data returned');
+          }
+
+          // Convert JSON to JobModel objects with better location distribution
+          final List<JobModel> jobListings =
+              jsonData.asMap().entries.map((entry) {
+            final index = entry.key;
+            final item = entry.value;
+
+            // Smart location assignment - ensure Delhi gets more jobs
+            String assignedState;
+            String assignedCity;
+
+            if (index < 6) {
+              // First 6 jobs go to Delhi to ensure availability
+              assignedState = 'Delhi';
+              final delhiCities = stateCities['Delhi'] ?? ['New Delhi'];
+              assignedCity = delhiCities[_random.nextInt(delhiCities.length)];
+            } else {
+              // Remaining jobs distributed across other states
+              assignedState =
+                  indianStates[_random.nextInt(indianStates.length)];
+              final citiesForState =
+                  stateCities[assignedState] ?? [assignedState];
+              assignedCity =
+                  citiesForState[_random.nextInt(citiesForState.length)];
+            }
+
+            return JobModel(
+              id: 'job_${DateTime.now().millisecondsSinceEpoch}_$index',
+              title: _cleanString(item['title'] ?? ''),
+              description: _cleanString(item['description'] ?? ''),
+              company: _cleanString(item['company'] ?? ''),
+              salary: _cleanString(item['salary'] ?? ''),
+              experience: _cleanString(item['experience'] ?? ''),
+              skills: _cleanSkillsList(List<String>.from(item['skills'] ?? [])),
+              category: category, // Ensure category matches exactly
+              profession: profession, // Ensure profession matches exactly
+              // Location fields
+              state: assignedState,
+              city: assignedCity,
+              location: '$assignedCity, $assignedState',
+              address: '${assignedCity}, $assignedState, India',
+              // Optional fields with some random data
+              jobType: _getRandomJobType(),
+              workMode: _getRandomWorkMode(),
+              postedDate: DateTime.now().subtract(
+                Duration(
+                    days: _random.nextInt(30)), // Posted within last 30 days
+              ),
+              isActive: true,
+              contactEmail: _generateRandomEmail(item['company'] ?? 'company'),
+            );
+          }).toList();
+
+          // Update jobs list
+          jobs.value = jobListings;
+
+          // Debug print to verify jobs are created correctly
+          print(
+              'Created ${jobListings.length} jobs for $profession - $category');
+          final delhiJobs = jobListings
+              .where((job) =>
+                  job.state?.toLowerCase() == 'delhi' ||
+                  job.city?.toLowerCase().contains('delhi') == true ||
+                  job.location?.toLowerCase().contains('delhi') == true)
+              .length;
+          print('Delhi jobs created: $delhiJobs');
         } catch (e) {
           errorMessage.value = 'Error parsing job data: $e';
           print('Parse error: $e');
+          print('Raw response: $responseMessage');
         }
       } else if (response.statusCode == 401) {
         errorMessage.value =
@@ -362,6 +367,101 @@ Ensure the entire response is a properly formatted JSON array that can be parsed
     } finally {
       isLoading.value = false;
     }
+  }
+
+  // NEW: Method to clean and extract JSON from response
+  String _cleanJsonResponse(String responseMessage) {
+    try {
+      // Remove any markdown code blocks
+      String cleaned = responseMessage
+          .replaceAll(RegExp(r'```json\s*'), '')
+          .replaceAll(RegExp(r'```\s*'), '')
+          .trim();
+
+      // Find JSON array in the response
+      final RegExp jsonRegex = RegExp(r'\[\s*\{.*\}\s*\]', dotAll: true);
+      final Match? jsonMatch = jsonRegex.firstMatch(cleaned);
+
+      if (jsonMatch != null) {
+        String jsonString = jsonMatch.group(0) ?? '[]';
+
+        // Additional cleaning for common JSON issues
+        jsonString = _fixCommonJsonIssues(jsonString);
+
+        // Test if it's valid JSON
+        jsonDecode(jsonString); // This will throw if invalid
+
+        return jsonString;
+      }
+
+      // If no JSON array found, try to extract from the entire response
+      if (cleaned.startsWith('[') && cleaned.endsWith(']')) {
+        cleaned = _fixCommonJsonIssues(cleaned);
+
+        // Test if it's valid JSON
+        jsonDecode(cleaned); // This will throw if invalid
+
+        return cleaned;
+      }
+
+      return '';
+    } catch (e) {
+      print('JSON cleaning error: $e');
+      return '';
+    }
+  }
+
+  // NEW: Method to fix common JSON formatting issues
+  String _fixCommonJsonIssues(String jsonString) {
+    // Fix unescaped quotes within string values
+    // This is a more sophisticated approach to handle quotes in descriptions
+
+    // Split by lines and process each line
+    List<String> lines = jsonString.split('\n');
+    List<String> fixedLines = [];
+
+    for (String line in lines) {
+      String fixedLine = line;
+
+      // If line contains a field with quotes, fix them
+      if (line.contains('"') && line.contains(':')) {
+        // Match field: "value" pattern and fix quotes in value
+        fixedLine =
+            line.replaceAllMapped(RegExp(r'("[^"]+"):\s*(".*")'), (match) {
+          String field = match.group(1) ?? '';
+          String value = match.group(2) ?? '';
+
+          // Fix quotes inside the value (but not the surrounding quotes)
+          if (value.length > 2) {
+            String innerValue = value.substring(1, value.length - 1);
+            innerValue = innerValue.replaceAll('"', '\\"');
+            value = '"$innerValue"';
+          }
+
+          return '$field: $value';
+        });
+      }
+
+      fixedLines.add(fixedLine);
+    }
+
+    return fixedLines.join('\n');
+  }
+
+  // NEW: Method to clean individual strings
+  String _cleanString(String value) {
+    return value
+        .replaceAll(RegExp(r'[^\w\s\-.,!?()₹%/]'),
+            '') // Remove special chars except common ones
+        .trim();
+  }
+
+  // NEW: Method to clean skills list
+  List<String> _cleanSkillsList(List<String> skills) {
+    return skills
+        .map((skill) => _cleanString(skill))
+        .where((skill) => skill.isNotEmpty)
+        .toList();
   }
 
   // Helper method to generate random email
