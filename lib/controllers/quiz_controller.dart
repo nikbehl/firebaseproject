@@ -17,7 +17,7 @@ class QuizController extends GetxController {
 
   // API key (Consider using environment variables or secure storage in production)
   final String apiKey =
-      "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";
+      "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";
   final String apiUrl = "https://api.groq.com/openai/v1/chat/completions";
 
   // Reset quiz state
