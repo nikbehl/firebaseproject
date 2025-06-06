@@ -107,6 +107,128 @@ class _JobListingsScreenState extends State<JobListingsScreen> {
     }).toList();
   }
 
+  // Method to show state selection dialog instead of dropdown
+  void _showStateSelectionDialog() {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return Dialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Container(
+            width: MediaQuery.of(context).size.width * 0.85,
+            height: MediaQuery.of(context).size.height * 0.7,
+            child: Column(
+              children: [
+                // Header
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: Colors.blue.shade50,
+                    borderRadius: const BorderRadius.only(
+                      topLeft: Radius.circular(12),
+                      topRight: Radius.circular(12),
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(Icons.location_on, color: Colors.blue.shade600),
+                      const SizedBox(width: 8),
+                      const Expanded(
+                        child: Text(
+                          'Select State',
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                      IconButton(
+                        onPressed: () => Navigator.pop(context),
+                        icon: const Icon(Icons.close),
+                        constraints: const BoxConstraints(),
+                        padding: EdgeInsets.zero,
+                      ),
+                    ],
+                  ),
+                ),
+
+                // Search field
+                Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: TextField(
+                    decoration: InputDecoration(
+                      hintText: 'Search states...',
+                      prefixIcon: const Icon(Icons.search),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 12,
+                      ),
+                    ),
+                    onChanged: (value) {
+                      setState(() {
+                        // Filter states based on search
+                      });
+                    },
+                  ),
+                ),
+
+                // States list
+                Expanded(
+                  child: ListView.builder(
+                    itemCount: indianStates.length,
+                    itemBuilder: (context, index) {
+                      final state = indianStates[index];
+                      final isSelected = selectedState.value == state;
+
+                      return ListTile(
+                        leading: Icon(
+                          Icons.location_city,
+                          color: isSelected
+                              ? Colors.blue.shade600
+                              : Colors.grey.shade600,
+                        ),
+                        title: Text(
+                          state,
+                          style: TextStyle(
+                            fontWeight: isSelected
+                                ? FontWeight.bold
+                                : FontWeight.normal,
+                            color: isSelected
+                                ? Colors.blue.shade700
+                                : Colors.black87,
+                          ),
+                        ),
+                        trailing: isSelected
+                            ? Icon(
+                                Icons.check_circle,
+                                color: Colors.blue.shade600,
+                              )
+                            : null,
+                        onTap: () {
+                          selectedState.value = state;
+                          Navigator.pop(context);
+                        },
+                        tileColor: isSelected ? Colors.blue.shade50 : null,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                      );
+                    },
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -118,6 +240,7 @@ class _JobListingsScreenState extends State<JobListingsScreen> {
       ),
       body: Column(
         children: [
+          // Location filter - Fixed version
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
@@ -135,41 +258,44 @@ class _JobListingsScreenState extends State<JobListingsScreen> {
               children: [
                 Icon(Icons.location_on, color: Colors.blue.shade600, size: 20),
                 const SizedBox(width: 8),
-                const Text('Location:',
-                    style:
-                        TextStyle(fontSize: 16, fontWeight: FontWeight.w500)),
+                const Text(
+                  'Location:',
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+                ),
                 const SizedBox(width: 12),
                 Expanded(
-                  child: Obx(() => Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 12),
-                        decoration: BoxDecoration(
-                          border: Border.all(color: Colors.grey.shade300),
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: DropdownButton<String>(
-                          value: selectedState.value,
-                          isExpanded: true,
-                          underline: const SizedBox(),
-                          icon: Icon(Icons.keyboard_arrow_down,
-                              color: Colors.grey.shade600),
-                          items: indianStates.map((String state) {
-                            return DropdownMenuItem<String>(
-                              value: state,
-                              child: Text(state,
-                                  style: const TextStyle(fontSize: 16)),
-                            );
-                          }).toList(),
-                          onChanged: (String? newValue) {
-                            if (newValue != null) {
-                              selectedState.value = newValue;
-                            }
-                          },
+                  child: Obx(() => InkWell(
+                        onTap: _showStateSelectionDialog,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 12,
+                          ),
+                          decoration: BoxDecoration(
+                            border: Border.all(color: Colors.grey.shade300),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(
+                                selectedState.value,
+                                style: const TextStyle(fontSize: 16),
+                              ),
+                              Icon(
+                                Icons.keyboard_arrow_down,
+                                color: Colors.grey.shade600,
+                              ),
+                            ],
+                          ),
                         ),
                       )),
                 ),
               ],
             ),
           ),
+
+          // Category display
           Container(
             width: double.infinity,
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -183,6 +309,8 @@ class _JobListingsScreenState extends State<JobListingsScreen> {
               ),
             ),
           ),
+
+          // Jobs list
           Expanded(
             child: Obx(() {
               if (jobController.isLoading.value) {
