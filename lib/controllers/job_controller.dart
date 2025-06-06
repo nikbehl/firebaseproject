@@ -271,7 +271,7 @@ Format structure for each job:
         // Try to extract and clean JSON from the response
         try {
           // Clean the response message
-          final cleanedJson = _cleanJsonResponse(responseMessage);
+          final cleanedJson = _cleanJsonResponseEnhanced(responseMessage);
 
           if (cleanedJson.isEmpty) {
             throw Exception('No valid JSON found in response');
@@ -369,47 +369,77 @@ Format structure for each job:
     }
   }
 
-  // NEW: Method to clean and extract JSON from response
-  String _cleanJsonResponse(String responseMessage) {
+  String _cleanJsonResponseEnhanced(String responseMessage) {
     try {
-      // Remove any markdown code blocks
+      // Remove markdown formatting
       String cleaned = responseMessage
           .replaceAll(RegExp(r'```json\s*'), '')
           .replaceAll(RegExp(r'```\s*'), '')
           .trim();
 
-      // Find JSON array in the response
-      final RegExp jsonRegex = RegExp(r'\[\s*\{.*\}\s*\]', dotAll: true);
-      final Match? jsonMatch = jsonRegex.firstMatch(cleaned);
+      // Try multiple extraction patterns
+      List<String> attempts = [
+        _extractWithPattern(cleaned, RegExp(r'\[\s*\{.*\}\s*\]', dotAll: true)),
+        _extractWithPattern(cleaned, RegExp(r'\[[\s\S]*\]')),
+        _tryFixBrokenJson(cleaned),
+      ];
 
-      if (jsonMatch != null) {
-        String jsonString = jsonMatch.group(0) ?? '[]';
-
-        // Additional cleaning for common JSON issues
-        jsonString = _fixCommonJsonIssues(jsonString);
-
-        // Test if it's valid JSON
-        jsonDecode(jsonString); // This will throw if invalid
-
-        return jsonString;
+      for (String attempt in attempts) {
+        if (attempt.isNotEmpty && _isValidJson(attempt)) {
+          return attempt;
+        }
       }
 
-      // If no JSON array found, try to extract from the entire response
-      if (cleaned.startsWith('[') && cleaned.endsWith(']')) {
-        cleaned = _fixCommonJsonIssues(cleaned);
-
-        // Test if it's valid JSON
-        jsonDecode(cleaned); // This will throw if invalid
-
-        return cleaned;
-      }
-
-      return '';
+      // Fallback: create basic jobs
+      print('Using fallback job creation');
+      return _createBasicFallbackJobs();
     } catch (e) {
-      print('JSON cleaning error: $e');
-      return '';
+      print('JSON cleaning failed: $e');
+      return _createBasicFallbackJobs();
     }
   }
+
+  // NEW: Method to clean and extract JSON from response
+  // String _cleanJsonResponse(String responseMessage) {
+  //   try {
+  //     // Remove any markdown code blocks
+  //     String cleaned = responseMessage
+  //         .replaceAll(RegExp(r'```json\s*'), '')
+  //         .replaceAll(RegExp(r'```\s*'), '')
+  //         .trim();
+
+  //     // Find JSON array in the response
+  //     final RegExp jsonRegex = RegExp(r'\[\s*\{.*\}\s*\]', dotAll: true);
+  //     final Match? jsonMatch = jsonRegex.firstMatch(cleaned);
+
+  //     if (jsonMatch != null) {
+  //       String jsonString = jsonMatch.group(0) ?? '[]';
+
+  //       // Additional cleaning for common JSON issues
+  //       jsonString = _fixCommonJsonIssues(jsonString);
+
+  //       // Test if it's valid JSON
+  //       jsonDecode(jsonString); // This will throw if invalid
+
+  //       return jsonString;
+  //     }
+
+  //     // If no JSON array found, try to extract from the entire response
+  //     if (cleaned.startsWith('[') && cleaned.endsWith(']')) {
+  //       cleaned = _fixCommonJsonIssues(cleaned);
+
+  //       // Test if it's valid JSON
+  //       jsonDecode(cleaned); // This will throw if invalid
+
+  //       return cleaned;
+  //     }
+
+  //     return '';
+  //   } catch (e) {
+  //     print('JSON cleaning error: $e');
+  //     return '';
+  //   }
+  // }
 
   // NEW: Method to fix common JSON formatting issues
   String _fixCommonJsonIssues(String jsonString) {
@@ -570,5 +600,412 @@ Format structure for each job:
     });
 
     print('========================\n');
+  }
+
+  String _extractWithPattern(String text, RegExp pattern) {
+    final match = pattern.firstMatch(text);
+    if (match != null) {
+      String extracted = match.group(0) ?? '';
+      return _fixBasicJsonIssues(extracted);
+    }
+    return '';
+  }
+
+// 3. Try to fix broken JSON
+  String _tryFixBrokenJson(String text) {
+    if (!text.startsWith('[')) text = '[' + text;
+    if (!text.endsWith(']')) text = text + ']';
+
+    // Fix common issues
+    text = text
+        .replaceAll(RegExp(r',\s*}'), '}') // Remove trailing commas
+        .replaceAll(RegExp(r',\s*]'), ']')
+        .replaceAll(
+            RegExp(r'([{,]\s*)([a-zA-Z_]\w*)\s*:'), r'$1"$2":'); // Quote keys
+
+    return text;
+  }
+
+  bool _isValidJson(String jsonString) {
+    try {
+      final decoded = jsonDecode(jsonString);
+      return decoded is List && decoded.isNotEmpty;
+    } catch (e) {
+      return false;
+    }
+  }
+
+// 5. Create basic fallback jobs
+  String _createBasicFallbackJobs() {
+    final profession = _lastProfession ?? 'Developer';
+    final category = _lastCategory ?? 'Technology';
+
+    return jsonEncode([
+      {
+        "title": "$category $profession",
+        "description":
+            "Join our team as a $category specialist. Work on innovative projects and grow your skills.",
+        "company": "TechFlow Solutions",
+        "salary": "₹6-12 LPA",
+        "experience": "2-4 years",
+        "skills": [
+          category,
+          "Problem Solving",
+          "Communication",
+          "Teamwork",
+          "Project Management"
+        ]
+      },
+      {
+        "title": "Senior $category Engineer",
+        "description":
+            "Lead $category development initiatives and mentor junior team members.",
+        "company": "Innovation Labs",
+        "salary": "₹12-20 LPA",
+        "experience": "5+ years",
+        "skills": [
+          "Advanced $category",
+          "Leadership",
+          "System Design",
+          "Mentoring",
+          "Strategy"
+        ]
+      },
+      {
+        "title": "Junior $category Developer",
+        "description":
+            "Perfect opportunity for fresh graduates to start their career in $category development.",
+        "company": "StartUp Hub",
+        "salary": "₹4-8 LPA",
+        "experience": "0-2 years",
+        "skills": [
+          "Basic $category",
+          "Learning Agility",
+          "Collaboration",
+          "Documentation",
+          "Testing"
+        ]
+      },
+      {
+        "title": "$category Consultant",
+        "description":
+            "Provide expert $category consulting services to clients across various industries.",
+        "company": "ConsultPro",
+        "salary": "₹10-15 LPA",
+        "experience": "3-6 years",
+        "skills": [
+          category,
+          "Client Management",
+          "Analysis",
+          "Presentation",
+          "Business Understanding"
+        ]
+      },
+      {
+        "title": "Lead $category Architect",
+        "description":
+            "Design and implement large-scale $category solutions for enterprise clients.",
+        "company": "Enterprise Solutions Inc",
+        "salary": "₹18-25 LPA",
+        "experience": "7+ years",
+        "skills": [
+          "Expert $category",
+          "Architecture",
+          "Team Leadership",
+          "Enterprise Solutions",
+          "Strategic Planning"
+        ]
+      }
+    ]);
+  }
+
+  String _buildBetterPrompt(String profession, String category) {
+    return '''You must return ONLY a valid JSON array. No explanations, no markdown.
+
+Create 15 job listings for $profession specializing in $category.
+
+Return this exact format:
+[{"title":"Job Title","description":"Brief description","company":"Company Name","salary":"₹X-Y LPA","experience":"X years","skills":["skill1","skill2","skill3","skill4"]}]
+
+Requirements:
+- Focus on $category within $profession
+- Include entry to senior levels  
+- Use Indian salary ranges with ₹
+- 4-6 skills per job
+- Real company names preferred
+
+Return JSON array immediately.''';
+  }
+
+  Future<void> _performJobFetchImproved(
+      String profession, String category) async {
+    int retryCount = 0;
+    const maxRetries = 3;
+
+    while (retryCount < maxRetries) {
+      try {
+        final response = await http
+            .post(
+              Uri.parse(apiUrl),
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer $apiKey',
+              },
+              body: jsonEncode({
+                "model": "gemma2-9b-it",
+                "messages": [
+                  {
+                    "role": "system",
+                    "content":
+                        "Return only valid JSON arrays. No markdown or explanations."
+                  },
+                  {
+                    "role": "user",
+                    "content": _buildBetterPrompt(profession, category),
+                  }
+                ],
+                "temperature": 0.3, // More consistent output
+                "max_tokens": 2000, // Limit response length
+              }),
+            )
+            .timeout(const Duration(seconds: 30));
+
+        if (response.statusCode == 200) {
+          final data = jsonDecode(response.body);
+          final responseMessage = data['choices'][0]['message']['content'];
+
+          // Use enhanced JSON cleaning
+          final cleanedJson = _cleanJsonResponseEnhanced(responseMessage);
+
+          if (cleanedJson.isNotEmpty) {
+            final List<dynamic> jsonData = jsonDecode(cleanedJson);
+
+            // Create job models with validation
+            final List<JobModel> validJobs = [];
+
+            for (int i = 0; i < jsonData.length && i < 15; i++) {
+              final item = jsonData[i];
+
+              if (item is Map<String, dynamic> &&
+                  item['title'] != null &&
+                  item['company'] != null) {
+                final job =
+                    _createJobModelSafely(item, i, profession, category);
+                if (job != null) {
+                  validJobs.add(job);
+                }
+              }
+            }
+
+            if (validJobs.length >= 3) {
+              // At least 3 valid jobs
+              jobs.value = validJobs;
+              print('Successfully loaded ${validJobs.length} jobs');
+              return; // Success!
+            }
+          }
+
+          throw Exception('Insufficient valid job data received');
+        } else if (response.statusCode == 401) {
+          errorMessage.value = "API key error. Please check configuration.";
+          return;
+        } else {
+          throw Exception(
+              'HTTP ${response.statusCode}: ${response.reasonPhrase}');
+        }
+      } catch (e) {
+        retryCount++;
+        print('Attempt $retryCount failed: $e');
+
+        if (retryCount >= maxRetries) {
+          // Final fallback: use basic jobs
+          print('All attempts failed, using fallback jobs');
+          final fallbackJson = _createBasicFallbackJobs();
+          final fallbackData = jsonDecode(fallbackJson);
+
+          final fallbackJobs = fallbackData.map<JobModel>((item) {
+            return _createJobModelSafely(item, 0, profession, category)!;
+          }).toList();
+
+          jobs.value = fallbackJobs;
+          return;
+        }
+
+        // Wait before retry
+        await Future.delayed(Duration(seconds: retryCount));
+      }
+    }
+
+    isLoading.value = false;
+  }
+
+  JobModel? _createJobModelSafely(Map<String, dynamic> item, int index,
+      String profession, String category) {
+    try {
+      // Validate required fields
+      if (item['title'] == null || item['title'].toString().trim().isEmpty) {
+        print('Skipping job with missing title at index $index');
+        return null;
+      }
+
+      if (item['company'] == null ||
+          item['company'].toString().trim().isEmpty) {
+        print('Skipping job with missing company at index $index');
+        return null;
+      }
+
+      // Smart location assignment (same as your existing logic)
+      String assignedState;
+      String assignedCity;
+
+      if (index < 6) {
+        // First 6 jobs go to Delhi to ensure availability
+        assignedState = 'Delhi';
+        final delhiCities = stateCities['Delhi'] ?? ['New Delhi'];
+        assignedCity = delhiCities[_random.nextInt(delhiCities.length)];
+      } else {
+        // Remaining jobs distributed across other states
+        assignedState = indianStates[_random.nextInt(indianStates.length)];
+        final citiesForState = stateCities[assignedState] ?? [assignedState];
+        assignedCity = citiesForState[_random.nextInt(citiesForState.length)];
+      }
+
+      // Create the job model with safe defaults
+      return JobModel(
+        id: 'job_${DateTime.now().millisecondsSinceEpoch}_$index',
+        title: _cleanStringSafely(item['title']),
+        description: _cleanStringSafely(item['description'],
+            defaultValue: 'Job description not available'),
+        company: _cleanStringSafely(item['company']),
+        salary:
+            _cleanStringSafely(item['salary'], defaultValue: '₹ Competitive'),
+        experience: _cleanStringSafely(item['experience'],
+            defaultValue: 'As per requirement'),
+        skills: _cleanSkillsListSafely(item['skills']),
+        category: category,
+        profession: profession,
+        // Location fields
+        state: assignedState,
+        city: assignedCity,
+        location: '$assignedCity, $assignedState',
+        address: '$assignedCity, $assignedState, India',
+        // Optional fields with random data
+        jobType: _getRandomJobType(),
+        workMode: _getRandomWorkMode(),
+        postedDate: DateTime.now().subtract(
+          Duration(days: _random.nextInt(30)), // Posted within last 30 days
+        ),
+        isActive: true,
+        contactEmail: _generateRandomEmailSafely(item['company']),
+      );
+    } catch (e) {
+      print('Error creating job model at index $index: $e');
+      return null;
+    }
+  }
+
+  String _generateRandomEmailSafely(dynamic companyName) {
+    try {
+      final cleanCompanyName = (companyName?.toString() ?? 'company')
+          .toLowerCase()
+          .replaceAll(' ', '')
+          .replaceAll(RegExp(r'[^a-z0-9]'), '');
+
+      final domains = ['com', 'in', 'org', 'co.in'];
+      final domain = domains[_random.nextInt(domains.length)];
+
+      return 'careers@${cleanCompanyName.isEmpty ? 'company' : cleanCompanyName}.$domain';
+    } catch (e) {
+      return 'careers@company.com';
+    }
+  }
+
+  String _cleanStringSafely(dynamic input, {String defaultValue = ''}) {
+    if (input == null) return defaultValue;
+
+    try {
+      return input
+          .toString()
+          .replaceAll(RegExp(r'[^\w\s\-.,!?()₹%/:]'),
+              '') // Remove special chars except common ones
+          .trim();
+    } catch (e) {
+      return defaultValue;
+    }
+  }
+
+  List<String> _cleanSkillsListSafely(dynamic skills) {
+    try {
+      if (skills == null) {
+        return [
+          'General Skills',
+          'Communication',
+          'Problem Solving',
+          'Teamwork'
+        ];
+      }
+
+      if (skills is! List) {
+        return [
+          'General Skills',
+          'Communication',
+          'Problem Solving',
+          'Teamwork'
+        ];
+      }
+
+      final cleanedSkills = skills
+          .where((skill) => skill != null)
+          .map((skill) => _cleanStringSafely(skill))
+          .where((skill) => skill.isNotEmpty)
+          .take(6) // Limit to 6 skills max
+          .toList();
+
+      // Ensure we have at least some skills
+      if (cleanedSkills.isEmpty) {
+        return [
+          'General Skills',
+          'Communication',
+          'Problem Solving',
+          'Teamwork'
+        ];
+      }
+
+      return cleanedSkills;
+    } catch (e) {
+      return ['General Skills', 'Communication', 'Problem Solving', 'Teamwork'];
+    }
+  }
+
+  String _fixBasicJsonIssues(String jsonString) {
+    try {
+      // Ensure proper array structure
+      jsonString = jsonString.trim();
+      if (!jsonString.startsWith('[')) {
+        jsonString = '[' + jsonString;
+      }
+      if (!jsonString.endsWith(']')) {
+        jsonString = jsonString + ']';
+      }
+
+      // Fix common JSON formatting issues
+      jsonString = jsonString
+          // Fix unquoted keys
+          .replaceAll(
+              RegExp(r'([{,]\s*)([a-zA-Z_][a-zA-Z0-9_]*)\s*:'), r'$1"$2":')
+          // Quote unquoted string values (but not numbers, booleans, arrays, objects)
+          .replaceAll(RegExp(r':\s*([^"\[\{][^,\]\}]*[^,\]\}\s])'), r': "$1"')
+          // Fix double quotes
+          .replaceAll(RegExp(r'""([^"]*)\""'), r'"$1"')
+          // Remove trailing commas in objects
+          .replaceAll(RegExp(r',\s*}'), '}')
+          // Remove trailing commas in arrays
+          .replaceAll(RegExp(r',\s*]'), ']');
+
+      return jsonString;
+    } catch (e) {
+      print('Error fixing JSON: $e');
+      return jsonString;
+    }
   }
 }
