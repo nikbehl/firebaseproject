@@ -11,7 +11,7 @@ class TechGuideController extends GetxController {
 
   // API key (Consider using environment variables or secure storage in production)
   final String apiKey =
-      "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";
+      "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";
   final String apiUrl = "https://api.groq.com/openai/v1/chat/completions";
 
   // Fetch data from the API

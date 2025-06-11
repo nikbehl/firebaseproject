@@ -28,15 +28,15 @@ class ProfessionController extends GetxController {
       },
       {
         'title': 'UI/UX Designer',
-        'status': 'Coming Soon',
+        'status': 'Available',
         'icon': 'design_services',
-        'color': 'orange',
+        'color': 'green',
       },
       {
         'title': 'Data Scientist',
-        'status': 'Coming Soon',
+        'status': 'Available',
         'icon': 'analytics',
-        'color': 'orange',
+        'color': 'green',
       },
       {
         'title': 'Mobile Developer',
