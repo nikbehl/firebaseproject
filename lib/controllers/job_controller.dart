@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:math';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:get/get.dart';
 import 'package:http/http.dart' as http;
 import 'package:firebaseproject/models/job_model.dart';
@@ -11,9 +12,8 @@ class JobController extends GetxController {
   final RxString errorMessage = ''.obs;
 
   // API key (Consider using environment variables or secure storage in production)
-  final String apiKey =
-      "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";
-  final String apiUrl = "https://api.groq.com/openai/v1/chat/completions";
+  final String apiKey = dotenv.env['API_KEY']!;
+  final String apiUrl = dotenv.env['API_URL']!;
 
   // List of Indian states for random assignment
   final List<String> indianStates = [

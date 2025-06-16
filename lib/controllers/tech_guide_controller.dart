@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:get/get.dart';
 import 'package:http/http.dart' as http;
 import 'package:firebaseproject/models/tech_guide_response.dart';
@@ -10,9 +11,8 @@ class TechGuideController extends GetxController {
   final RxString errorMessage = ''.obs;
 
   // API key (Consider using environment variables or secure storage in production)
-  final String apiKey =
-      "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";
-  final String apiUrl = "https://api.groq.com/openai/v1/chat/completions";
+  final String apiKey = dotenv.env['API_KEY']!;
+  final String apiUrl = dotenv.env['API_URL']!;
 
   // Fetch data from the API
   Future<void> fetchTechGuideData(String category, String prompt) async {
@@ -30,6 +30,7 @@ class TechGuideController extends GetxController {
         },
         body: jsonEncode({
           "model": "gemma2-9b-it",
+          // "model": "gpt-4-turbo",
           "messages": [
             {
               "role": "user",
@@ -91,6 +92,7 @@ Be sure to include actual URLs for both sources and documentation."""
         },
         body: jsonEncode({
           "model": "gemma2-9b-it",
+          // "model": "gpt-4-turbo",
           "messages": [
             {
               "role": "user",
