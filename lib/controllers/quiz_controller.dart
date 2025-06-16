@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:get/get.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
@@ -16,9 +17,8 @@ class QuizController extends GetxController {
   final RxList<int> userAnswers = <int>[].obs;
 
   // API key (Consider using environment variables or secure storage in production)
-  final String apiKey =
-      "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";
-  final String apiUrl = "https://api.groq.com/openai/v1/chat/completions";
+  final String apiKey = dotenv.env['API_KEY']!;
+  final String apiUrl = dotenv.env['API_URL']!;
 
   // Reset quiz state
   void resetQuiz() {
