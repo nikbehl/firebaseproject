@@ -42,7 +42,7 @@ class _DataDisplayScreenState extends State<DataDisplayScreen> {
     _fetchRealTimeVersions();
   }
 
-  // [Keep all the existing API methods unchanged - _fetchRealTimeVersions, _fetchJavaScriptVersions, etc.]
+  // [Keep all existing API methods unchanged]
   Future<void> _fetchRealTimeVersions() async {
     isLoadingVersions.value = true;
     versionErrorMessage.value = '';
@@ -90,7 +90,6 @@ class _DataDisplayScreenState extends State<DataDisplayScreen> {
     }
   }
 
-  // [Include all the existing fetch methods here - keeping them exactly the same]
   Future<List<VersionInfo>> _fetchJavaScriptVersions() async {
     final List<VersionInfo> versions = [];
 
@@ -150,45 +149,688 @@ class _DataDisplayScreenState extends State<DataDisplayScreen> {
     return versions;
   }
 
-  // [Include all other fetch methods unchanged]
   Future<List<VersionInfo>> _fetchFrameworkVersions() async {
-    // ... existing implementation
-    return [];
+    final List<VersionInfo> versions = [];
+
+    try {
+      // React
+      final reactResponse = await http.get(
+        Uri.parse('https://registry.npmjs.org/react/latest'),
+        headers: {'Accept': 'application/json'},
+      ).timeout(const Duration(seconds: 10));
+
+      if (reactResponse.statusCode == 200) {
+        final reactData = jsonDecode(reactResponse.body);
+        versions.add(VersionInfo(
+          technology: 'React',
+          version: reactData['version']?.toString() ?? 'Unknown',
+          releaseDate:
+              reactData['time']?[reactData['version']]?.toString() ?? '',
+          additionalInfo: 'UI Library',
+        ));
+      }
+
+      // Vue.js
+      final vueResponse = await http.get(
+        Uri.parse('https://registry.npmjs.org/vue/latest'),
+        headers: {'Accept': 'application/json'},
+      ).timeout(const Duration(seconds: 10));
+
+      if (vueResponse.statusCode == 200) {
+        final vueData = jsonDecode(vueResponse.body);
+        versions.add(VersionInfo(
+          technology: 'Vue.js',
+          version: vueData['version']?.toString() ?? 'Unknown',
+          releaseDate: vueData['time']?[vueData['version']]?.toString() ?? '',
+          additionalInfo: 'Progressive Framework',
+        ));
+      }
+
+      // Angular CLI
+      final angularResponse = await http.get(
+        Uri.parse('https://registry.npmjs.org/@angular/cli/latest'),
+        headers: {'Accept': 'application/json'},
+      ).timeout(const Duration(seconds: 10));
+
+      if (angularResponse.statusCode == 200) {
+        final angularData = jsonDecode(angularResponse.body);
+        versions.add(VersionInfo(
+          technology: 'Angular CLI',
+          version: angularData['version']?.toString() ?? 'Unknown',
+          releaseDate:
+              angularData['time']?[angularData['version']]?.toString() ?? '',
+          additionalInfo: 'Development Platform',
+        ));
+      }
+
+      // Next.js
+      final nextResponse = await http.get(
+        Uri.parse('https://registry.npmjs.org/next/latest'),
+        headers: {'Accept': 'application/json'},
+      ).timeout(const Duration(seconds: 10));
+
+      if (nextResponse.statusCode == 200) {
+        final nextData = jsonDecode(nextResponse.body);
+        versions.add(VersionInfo(
+          technology: 'Next.js',
+          version: nextData['version']?.toString() ?? 'Unknown',
+          releaseDate: nextData['time']?[nextData['version']]?.toString() ?? '',
+          additionalInfo: 'React Framework',
+        ));
+      }
+    } catch (e) {
+      print('Error fetching framework versions: $e');
+    }
+
+    return versions;
   }
 
   Future<List<VersionInfo>> _fetchNodeJSVersions() async {
-    // ... existing implementation
-    return [];
+    final List<VersionInfo> versions = [];
+
+    try {
+      // Node.js (reuse from JavaScript method)
+      final nodeResponse = await http.get(
+        Uri.parse('https://nodejs.org/dist/index.json'),
+        headers: {'Accept': 'application/json'},
+      ).timeout(const Duration(seconds: 10));
+
+      if (nodeResponse.statusCode == 200) {
+        final nodeData = jsonDecode(nodeResponse.body) as List;
+        if (nodeData.isNotEmpty) {
+          final latestNode = nodeData.first;
+          versions.add(VersionInfo(
+            technology: 'Node.js',
+            version: latestNode['version']?.toString().replaceFirst('v', '') ??
+                'Unknown',
+            releaseDate: latestNode['date']?.toString() ?? '',
+            additionalInfo: 'LTS: ${latestNode['lts'] ?? 'No'}',
+          ));
+        }
+      }
+
+      // Express.js
+      final expressResponse = await http.get(
+        Uri.parse('https://registry.npmjs.org/express/latest'),
+        headers: {'Accept': 'application/json'},
+      ).timeout(const Duration(seconds: 10));
+
+      if (expressResponse.statusCode == 200) {
+        final expressData = jsonDecode(expressResponse.body);
+        versions.add(VersionInfo(
+          technology: 'Express.js',
+          version: expressData['version']?.toString() ?? 'Unknown',
+          releaseDate:
+              expressData['time']?[expressData['version']]?.toString() ?? '',
+          additionalInfo: 'Web Framework',
+        ));
+      }
+
+      // Fastify
+      final fastifyResponse = await http.get(
+        Uri.parse('https://registry.npmjs.org/fastify/latest'),
+        headers: {'Accept': 'application/json'},
+      ).timeout(const Duration(seconds: 10));
+
+      if (fastifyResponse.statusCode == 200) {
+        final fastifyData = jsonDecode(fastifyResponse.body);
+        versions.add(VersionInfo(
+          technology: 'Fastify',
+          version: fastifyData['version']?.toString() ?? 'Unknown',
+          releaseDate:
+              fastifyData['time']?[fastifyData['version']]?.toString() ?? '',
+          additionalInfo: 'Fast Web Framework',
+        ));
+      }
+
+      // Nest.js
+      final nestResponse = await http.get(
+        Uri.parse('https://registry.npmjs.org/@nestjs/core/latest'),
+        headers: {'Accept': 'application/json'},
+      ).timeout(const Duration(seconds: 10));
+
+      if (nestResponse.statusCode == 200) {
+        final nestData = jsonDecode(nestResponse.body);
+        versions.add(VersionInfo(
+          technology: 'NestJS',
+          version: nestData['version']?.toString() ?? 'Unknown',
+          releaseDate: nestData['time']?[nestData['version']]?.toString() ?? '',
+          additionalInfo: 'Progressive Framework',
+        ));
+      }
+    } catch (e) {
+      print('Error fetching Node.js versions: $e');
+    }
+
+    return versions;
   }
 
   Future<List<VersionInfo>> _fetchPythonVersions() async {
-    // ... existing implementation
-    return [];
+    final List<VersionInfo> versions = [];
+
+    try {
+      // Django
+      final djangoResponse = await http.get(
+        Uri.parse('https://pypi.org/pypi/django/json'),
+        headers: {'Accept': 'application/json'},
+      ).timeout(const Duration(seconds: 10));
+
+      if (djangoResponse.statusCode == 200) {
+        final djangoData = jsonDecode(djangoResponse.body);
+        final version = djangoData['info']?['version']?.toString() ?? 'Unknown';
+        versions.add(VersionInfo(
+          technology: 'Django',
+          version: version,
+          releaseDate: '',
+          additionalInfo: 'Web Framework',
+        ));
+      }
+
+      // Flask
+      final flaskResponse = await http.get(
+        Uri.parse('https://pypi.org/pypi/flask/json'),
+        headers: {'Accept': 'application/json'},
+      ).timeout(const Duration(seconds: 10));
+
+      if (flaskResponse.statusCode == 200) {
+        final flaskData = jsonDecode(flaskResponse.body);
+        final version = flaskData['info']?['version']?.toString() ?? 'Unknown';
+        versions.add(VersionInfo(
+          technology: 'Flask',
+          version: version,
+          releaseDate: '',
+          additionalInfo: 'Micro Framework',
+        ));
+      }
+
+      // FastAPI
+      final fastapiResponse = await http.get(
+        Uri.parse('https://pypi.org/pypi/fastapi/json'),
+        headers: {'Accept': 'application/json'},
+      ).timeout(const Duration(seconds: 10));
+
+      if (fastapiResponse.statusCode == 200) {
+        final fastapiData = jsonDecode(fastapiResponse.body);
+        final version =
+            fastapiData['info']?['version']?.toString() ?? 'Unknown';
+        versions.add(VersionInfo(
+          technology: 'FastAPI',
+          version: version,
+          releaseDate: '',
+          additionalInfo: 'Modern API Framework',
+        ));
+      }
+
+      // Pandas
+      final pandasResponse = await http.get(
+        Uri.parse('https://pypi.org/pypi/pandas/json'),
+        headers: {'Accept': 'application/json'},
+      ).timeout(const Duration(seconds: 10));
+
+      if (pandasResponse.statusCode == 200) {
+        final pandasData = jsonDecode(pandasResponse.body);
+        final version = pandasData['info']?['version']?.toString() ?? 'Unknown';
+        versions.add(VersionInfo(
+          technology: 'Pandas',
+          version: version,
+          releaseDate: '',
+          additionalInfo: 'Data Analysis',
+        ));
+      }
+
+      // NumPy
+      final numpyResponse = await http.get(
+        Uri.parse('https://pypi.org/pypi/numpy/json'),
+        headers: {'Accept': 'application/json'},
+      ).timeout(const Duration(seconds: 10));
+
+      if (numpyResponse.statusCode == 200) {
+        final numpyData = jsonDecode(numpyResponse.body);
+        final version = numpyData['info']?['version']?.toString() ?? 'Unknown';
+        versions.add(VersionInfo(
+          technology: 'NumPy',
+          version: version,
+          releaseDate: '',
+          additionalInfo: 'Scientific Computing',
+        ));
+      }
+    } catch (e) {
+      print('Error fetching Python versions: $e');
+    }
+
+    return versions;
   }
 
   Future<List<VersionInfo>> _fetchDatabaseVersions() async {
-    // ... existing implementation
-    return [];
+    final List<VersionInfo> versions = [];
+
+    try {
+      // MongoDB (via npm driver)
+      final mongoResponse = await http.get(
+        Uri.parse('https://registry.npmjs.org/mongodb/latest'),
+        headers: {'Accept': 'application/json'},
+      ).timeout(const Duration(seconds: 10));
+
+      if (mongoResponse.statusCode == 200) {
+        final mongoData = jsonDecode(mongoResponse.body);
+        versions.add(VersionInfo(
+          technology: 'MongoDB Driver',
+          version: mongoData['version']?.toString() ?? 'Unknown',
+          releaseDate:
+              mongoData['time']?[mongoData['version']]?.toString() ?? '',
+          additionalInfo: 'NoSQL Database',
+        ));
+      }
+
+      // Mongoose
+      final mongooseResponse = await http.get(
+        Uri.parse('https://registry.npmjs.org/mongoose/latest'),
+        headers: {'Accept': 'application/json'},
+      ).timeout(const Duration(seconds: 10));
+
+      if (mongooseResponse.statusCode == 200) {
+        final mongooseData = jsonDecode(mongooseResponse.body);
+        versions.add(VersionInfo(
+          technology: 'Mongoose',
+          version: mongooseData['version']?.toString() ?? 'Unknown',
+          releaseDate:
+              mongooseData['time']?[mongooseData['version']]?.toString() ?? '',
+          additionalInfo: 'MongoDB ODM',
+        ));
+      }
+
+      // Prisma
+      final prismaResponse = await http.get(
+        Uri.parse('https://registry.npmjs.org/prisma/latest'),
+        headers: {'Accept': 'application/json'},
+      ).timeout(const Duration(seconds: 10));
+
+      if (prismaResponse.statusCode == 200) {
+        final prismaData = jsonDecode(prismaResponse.body);
+        versions.add(VersionInfo(
+          technology: 'Prisma',
+          version: prismaData['version']?.toString() ?? 'Unknown',
+          releaseDate:
+              prismaData['time']?[prismaData['version']]?.toString() ?? '',
+          additionalInfo: 'Database Toolkit',
+        ));
+      }
+
+      // Sequelize
+      final sequelizeResponse = await http.get(
+        Uri.parse('https://registry.npmjs.org/sequelize/latest'),
+        headers: {'Accept': 'application/json'},
+      ).timeout(const Duration(seconds: 10));
+
+      if (sequelizeResponse.statusCode == 200) {
+        final sequelizeData = jsonDecode(sequelizeResponse.body);
+        versions.add(VersionInfo(
+          technology: 'Sequelize',
+          version: sequelizeData['version']?.toString() ?? 'Unknown',
+          releaseDate:
+              sequelizeData['time']?[sequelizeData['version']]?.toString() ??
+                  '',
+          additionalInfo: 'SQL ORM',
+        ));
+      }
+    } catch (e) {
+      print('Error fetching database versions: $e');
+    }
+
+    return versions;
   }
 
   Future<List<VersionInfo>> _fetchDevelopmentToolVersions() async {
-    // ... existing implementation
-    return [];
+    final List<VersionInfo> versions = [];
+
+    try {
+      // Webpack
+      final webpackResponse = await http.get(
+        Uri.parse('https://registry.npmjs.org/webpack/latest'),
+        headers: {'Accept': 'application/json'},
+      ).timeout(const Duration(seconds: 10));
+
+      if (webpackResponse.statusCode == 200) {
+        final webpackData = jsonDecode(webpackResponse.body);
+        versions.add(VersionInfo(
+          technology: 'Webpack',
+          version: webpackData['version']?.toString() ?? 'Unknown',
+          releaseDate:
+              webpackData['time']?[webpackData['version']]?.toString() ?? '',
+          additionalInfo: 'Module Bundler',
+        ));
+      }
+
+      // Vite
+      final viteResponse = await http.get(
+        Uri.parse('https://registry.npmjs.org/vite/latest'),
+        headers: {'Accept': 'application/json'},
+      ).timeout(const Duration(seconds: 10));
+
+      if (viteResponse.statusCode == 200) {
+        final viteData = jsonDecode(viteResponse.body);
+        versions.add(VersionInfo(
+          technology: 'Vite',
+          version: viteData['version']?.toString() ?? 'Unknown',
+          releaseDate: viteData['time']?[viteData['version']]?.toString() ?? '',
+          additionalInfo: 'Build Tool',
+        ));
+      }
+
+      // ESLint
+      final eslintResponse = await http.get(
+        Uri.parse('https://registry.npmjs.org/eslint/latest'),
+        headers: {'Accept': 'application/json'},
+      ).timeout(const Duration(seconds: 10));
+
+      if (eslintResponse.statusCode == 200) {
+        final eslintData = jsonDecode(eslintResponse.body);
+        versions.add(VersionInfo(
+          technology: 'ESLint',
+          version: eslintData['version']?.toString() ?? 'Unknown',
+          releaseDate:
+              eslintData['time']?[eslintData['version']]?.toString() ?? '',
+          additionalInfo: 'JavaScript Linter',
+        ));
+      }
+
+      // Prettier
+      final prettierResponse = await http.get(
+        Uri.parse('https://registry.npmjs.org/prettier/latest'),
+        headers: {'Accept': 'application/json'},
+      ).timeout(const Duration(seconds: 10));
+
+      if (prettierResponse.statusCode == 200) {
+        final prettierData = jsonDecode(prettierResponse.body);
+        versions.add(VersionInfo(
+          technology: 'Prettier',
+          version: prettierData['version']?.toString() ?? 'Unknown',
+          releaseDate:
+              prettierData['time']?[prettierData['version']]?.toString() ?? '',
+          additionalInfo: 'Code Formatter',
+        ));
+      }
+
+      // Babel
+      final babelResponse = await http.get(
+        Uri.parse('https://registry.npmjs.org/@babel/core/latest'),
+        headers: {'Accept': 'application/json'},
+      ).timeout(const Duration(seconds: 10));
+
+      if (babelResponse.statusCode == 200) {
+        final babelData = jsonDecode(babelResponse.body);
+        versions.add(VersionInfo(
+          technology: 'Babel',
+          version: babelData['version']?.toString() ?? 'Unknown',
+          releaseDate:
+              babelData['time']?[babelData['version']]?.toString() ?? '',
+          additionalInfo: 'JavaScript Compiler',
+        ));
+      }
+    } catch (e) {
+      print('Error fetching development tool versions: $e');
+    }
+
+    return versions;
   }
 
   Future<List<VersionInfo>> _fetchCSSVersions() async {
-    // ... existing implementation
-    return [];
+    final List<VersionInfo> versions = [];
+
+    try {
+      // Sass
+      final sassResponse = await http.get(
+        Uri.parse('https://registry.npmjs.org/sass/latest'),
+        headers: {'Accept': 'application/json'},
+      ).timeout(const Duration(seconds: 10));
+
+      if (sassResponse.statusCode == 200) {
+        final sassData = jsonDecode(sassResponse.body);
+        versions.add(VersionInfo(
+          technology: 'Sass',
+          version: sassData['version']?.toString() ?? 'Unknown',
+          releaseDate: sassData['time']?[sassData['version']]?.toString() ?? '',
+          additionalInfo: 'CSS Preprocessor',
+        ));
+      }
+
+      // Tailwind CSS
+      final tailwindResponse = await http.get(
+        Uri.parse('https://registry.npmjs.org/tailwindcss/latest'),
+        headers: {'Accept': 'application/json'},
+      ).timeout(const Duration(seconds: 10));
+
+      if (tailwindResponse.statusCode == 200) {
+        final tailwindData = jsonDecode(tailwindResponse.body);
+        versions.add(VersionInfo(
+          technology: 'Tailwind CSS',
+          version: tailwindData['version']?.toString() ?? 'Unknown',
+          releaseDate:
+              tailwindData['time']?[tailwindData['version']]?.toString() ?? '',
+          additionalInfo: 'Utility-First CSS',
+        ));
+      }
+
+      // PostCSS
+      final postcssResponse = await http.get(
+        Uri.parse('https://registry.npmjs.org/postcss/latest'),
+        headers: {'Accept': 'application/json'},
+      ).timeout(const Duration(seconds: 10));
+
+      if (postcssResponse.statusCode == 200) {
+        final postcssData = jsonDecode(postcssResponse.body);
+        versions.add(VersionInfo(
+          technology: 'PostCSS',
+          version: postcssData['version']?.toString() ?? 'Unknown',
+          releaseDate:
+              postcssData['time']?[postcssData['version']]?.toString() ?? '',
+          additionalInfo: 'CSS Tool',
+        ));
+      }
+
+      // Bootstrap
+      final bootstrapResponse = await http.get(
+        Uri.parse('https://registry.npmjs.org/bootstrap/latest'),
+        headers: {'Accept': 'application/json'},
+      ).timeout(const Duration(seconds: 10));
+
+      if (bootstrapResponse.statusCode == 200) {
+        final bootstrapData = jsonDecode(bootstrapResponse.body);
+        versions.add(VersionInfo(
+          technology: 'Bootstrap',
+          version: bootstrapData['version']?.toString() ?? 'Unknown',
+          releaseDate:
+              bootstrapData['time']?[bootstrapData['version']]?.toString() ??
+                  '',
+          additionalInfo: 'CSS Framework',
+        ));
+      }
+    } catch (e) {
+      print('Error fetching CSS versions: $e');
+    }
+
+    return versions;
   }
 
   Future<List<VersionInfo>> _fetchHTMLVersions() async {
-    // ... existing implementation
-    return [];
+    final List<VersionInfo> versions = [];
+
+    try {
+      // Add HTML5 standard info (static since it's a web standard)
+      versions.add(VersionInfo(
+        technology: 'HTML5',
+        version: '5.2',
+        releaseDate: '2017-12-14',
+        additionalInfo: 'W3C Recommendation',
+      ));
+
+      // HTML Webpack Plugin
+      final htmlWebpackResponse = await http.get(
+        Uri.parse('https://registry.npmjs.org/html-webpack-plugin/latest'),
+        headers: {'Accept': 'application/json'},
+      ).timeout(const Duration(seconds: 10));
+
+      if (htmlWebpackResponse.statusCode == 200) {
+        final htmlWebpackData = jsonDecode(htmlWebpackResponse.body);
+        versions.add(VersionInfo(
+          technology: 'HTML Webpack Plugin',
+          version: htmlWebpackData['version']?.toString() ?? 'Unknown',
+          releaseDate: htmlWebpackData['time']?[htmlWebpackData['version']]
+                  ?.toString() ??
+              '',
+          additionalInfo: 'HTML Generation',
+        ));
+      }
+
+      // html-minifier
+      final htmlMinifierResponse = await http.get(
+        Uri.parse('https://registry.npmjs.org/html-minifier/latest'),
+        headers: {'Accept': 'application/json'},
+      ).timeout(const Duration(seconds: 10));
+
+      if (htmlMinifierResponse.statusCode == 200) {
+        final htmlMinifierData = jsonDecode(htmlMinifierResponse.body);
+        versions.add(VersionInfo(
+          technology: 'HTML Minifier',
+          version: htmlMinifierData['version']?.toString() ?? 'Unknown',
+          releaseDate: htmlMinifierData['time']?[htmlMinifierData['version']]
+                  ?.toString() ??
+              '',
+          additionalInfo: 'HTML Optimization',
+        ));
+      }
+
+      // Pug (formerly Jade)
+      final pugResponse = await http.get(
+        Uri.parse('https://registry.npmjs.org/pug/latest'),
+        headers: {'Accept': 'application/json'},
+      ).timeout(const Duration(seconds: 10));
+
+      if (pugResponse.statusCode == 200) {
+        final pugData = jsonDecode(pugResponse.body);
+        versions.add(VersionInfo(
+          technology: 'Pug',
+          version: pugData['version']?.toString() ?? 'Unknown',
+          releaseDate: pugData['time']?[pugData['version']]?.toString() ?? '',
+          additionalInfo: 'Template Engine',
+        ));
+      }
+    } catch (e) {
+      print('Error fetching HTML versions: $e');
+    }
+
+    return versions;
   }
 
   Future<List<VersionInfo>> _fetchGeneralVersions() async {
-    // ... existing implementation
-    return [];
+    final List<VersionInfo> versions = [];
+
+    try {
+      // For UI/UX Designer categories
+      if (widget.profession.toLowerCase().contains('designer')) {
+        // Add design-related static versions
+        versions.addAll([
+          VersionInfo(
+            technology: 'Figma',
+            version: 'Web App',
+            releaseDate: '2024-12-01',
+            additionalInfo: 'Design Tool',
+          ),
+          VersionInfo(
+            technology: 'Adobe XD',
+            version: '57.1',
+            releaseDate: '2024-11-15',
+            additionalInfo: 'Design Platform',
+          ),
+          VersionInfo(
+            technology: 'Sketch',
+            version: '99.1',
+            releaseDate: '2024-12-05',
+            additionalInfo: 'Design Tool',
+          ),
+        ]);
+      }
+
+      // For Data Scientist categories
+      if (widget.profession.toLowerCase().contains('data')) {
+        // Jupyter
+        final jupyterResponse = await http.get(
+          Uri.parse('https://pypi.org/pypi/jupyter/json'),
+          headers: {'Accept': 'application/json'},
+        ).timeout(const Duration(seconds: 10));
+
+        if (jupyterResponse.statusCode == 200) {
+          final jupyterData = jsonDecode(jupyterResponse.body);
+          final version =
+              jupyterData['info']?['version']?.toString() ?? 'Unknown';
+          versions.add(VersionInfo(
+            technology: 'Jupyter',
+            version: version,
+            releaseDate: '',
+            additionalInfo: 'Interactive Computing',
+          ));
+        }
+
+        // TensorFlow
+        final tensorflowResponse = await http.get(
+          Uri.parse('https://pypi.org/pypi/tensorflow/json'),
+          headers: {'Accept': 'application/json'},
+        ).timeout(const Duration(seconds: 10));
+
+        if (tensorflowResponse.statusCode == 200) {
+          final tensorflowData = jsonDecode(tensorflowResponse.body);
+          final version =
+              tensorflowData['info']?['version']?.toString() ?? 'Unknown';
+          versions.add(VersionInfo(
+            technology: 'TensorFlow',
+            version: version,
+            releaseDate: '',
+            additionalInfo: 'Machine Learning',
+          ));
+        }
+
+        // Scikit-learn
+        final sklearnResponse = await http.get(
+          Uri.parse('https://pypi.org/pypi/scikit-learn/json'),
+          headers: {'Accept': 'application/json'},
+        ).timeout(const Duration(seconds: 10));
+
+        if (sklearnResponse.statusCode == 200) {
+          final sklearnData = jsonDecode(sklearnResponse.body);
+          final version =
+              sklearnData['info']?['version']?.toString() ?? 'Unknown';
+          versions.add(VersionInfo(
+            technology: 'Scikit-learn',
+            version: version,
+            releaseDate: '',
+            additionalInfo: 'Machine Learning Library',
+          ));
+        }
+      }
+
+      // If no specific versions found, add some general tech versions
+      if (versions.isEmpty) {
+        // Git (static - command line tool)
+        versions.add(VersionInfo(
+          technology: 'Git',
+          version: '2.43.0',
+          releaseDate: '2023-11-20',
+          additionalInfo: 'Version Control',
+        ));
+
+        // VS Code (static - general editor)
+        versions.add(VersionInfo(
+          technology: 'VS Code',
+          version: '1.85.0',
+          releaseDate: '2024-01-03',
+          additionalInfo: 'Code Editor',
+        ));
+      }
+    } catch (e) {
+      print('Error fetching general versions: $e');
+    }
+
+    return versions;
   }
 
   String _capitalizeString(String text) {
@@ -259,17 +901,14 @@ class _DataDisplayScreenState extends State<DataDisplayScreen> {
         .trim();
   }
 
-  // NEW: Extract preview text for compact view
   String _getPreviewText(String fullText, {int maxLength = 200}) {
     if (fullText.length <= maxLength) return fullText;
 
-    // Find the last complete sentence within the limit
     String preview = fullText.substring(0, maxLength);
     int lastSentence = preview.lastIndexOf('.');
     if (lastSentence > maxLength * 0.5) {
       preview = preview.substring(0, lastSentence + 1);
     } else {
-      // If no good sentence break, just cut at word boundary
       int lastSpace = preview.lastIndexOf(' ');
       if (lastSpace > 0) {
         preview = preview.substring(0, lastSpace) + '...';
@@ -378,8 +1017,8 @@ class _DataDisplayScreenState extends State<DataDisplayScreen> {
                 _buildCompactContentSection(response),
                 const SizedBox(height: 16),
 
-                // COMPACT VERSIONS SECTION
-                _buildCompactVersionsSection(),
+                // NEW: COMPACT VERSIONS TABLE SECTION
+                _buildCompactVersionsTableSection(),
                 const SizedBox(height: 16),
 
                 // COMPACT SOURCES SECTION
@@ -403,7 +1042,7 @@ class _DataDisplayScreenState extends State<DataDisplayScreen> {
     );
   }
 
-  // NEW: Build compact content section with See More functionality
+  // MAIN CONTENT SECTION (unchanged)
   Widget _buildCompactContentSection(TechGuideResponse response) {
     final fullContent = _cleanContent(response.mainContent);
     final previewContent = _getPreviewText(fullContent);
@@ -416,7 +1055,6 @@ class _DataDisplayScreenState extends State<DataDisplayScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // HIGHLIGHTED SUBHEADING
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
               decoration: BoxDecoration(
@@ -450,8 +1088,6 @@ class _DataDisplayScreenState extends State<DataDisplayScreen> {
               ),
             ),
             const SizedBox(height: 16),
-
-            // CONTENT WITH EXPAND/COLLAPSE
             Obx(() {
               final showFull = isContentExpanded.value;
               return Container(
@@ -498,14 +1134,8 @@ class _DataDisplayScreenState extends State<DataDisplayScreen> {
     );
   }
 
-  // NEW: Build compact versions section
-  // NEW: Build compact versions section
-  Widget _buildCompactVersionsSection() {
-    // Check if realTimeVersions is empty, and if so, don't render the version section
-    if (realTimeVersions.isEmpty) {
-      return SizedBox.shrink(); // Hide the section if no versions are available
-    }
-
+  // NEW: BUILD COMPACT VERSIONS TABLE SECTION
+  Widget _buildCompactVersionsTableSection() {
     return Card(
       elevation: 2,
       child: Padding(
@@ -530,12 +1160,12 @@ class _DataDisplayScreenState extends State<DataDisplayScreen> {
                   Icon(Icons.system_update,
                       color: Colors.orange.shade700, size: 20),
                   const SizedBox(width: 8),
-                  const Text(
+                  Text(
                     'Latest Versions',
                     style: TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
-                      color: Colors.orange,
+                      color: Colors.orange.shade700,
                     ),
                   ),
                   const Spacer(),
@@ -545,30 +1175,38 @@ class _DataDisplayScreenState extends State<DataDisplayScreen> {
                           height: 16,
                           child: CircularProgressIndicator(strokeWidth: 2),
                         )
-                      : const SizedBox.shrink()),
+                      : IconButton(
+                          onPressed: _fetchRealTimeVersions,
+                          icon: Icon(Icons.refresh,
+                              size: 16, color: Colors.orange.shade600),
+                          constraints:
+                              const BoxConstraints(minWidth: 32, minHeight: 32),
+                          padding: const EdgeInsets.all(4),
+                          tooltip: 'Refresh Version Data',
+                        )),
                 ],
               ),
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 16),
 
             Obx(() {
               if (versionErrorMessage.value.isNotEmpty) {
                 return Container(
-                  padding: const EdgeInsets.all(8),
+                  padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
                     color: Colors.red.shade50,
-                    borderRadius: BorderRadius.circular(4),
+                    borderRadius: BorderRadius.circular(8),
                     border: Border.all(color: Colors.red.shade200),
                   ),
                   child: Row(
                     children: [
-                      Icon(Icons.warning, color: Colors.red.shade600, size: 16),
+                      Icon(Icons.warning, color: Colors.red.shade600, size: 18),
                       const SizedBox(width: 8),
                       Expanded(
                         child: Text(
                           versionErrorMessage.value,
                           style: TextStyle(
-                              color: Colors.red.shade600, fontSize: 12),
+                              color: Colors.red.shade600, fontSize: 13),
                         ),
                       ),
                     ],
@@ -576,43 +1214,260 @@ class _DataDisplayScreenState extends State<DataDisplayScreen> {
                 );
               }
 
-              final versions = realTimeVersions;
+              final versions = realTimeVersions.where((version) {
+                return version.version.isNotEmpty &&
+                    version.technology.isNotEmpty;
+              }).toList();
+
+              if (versions.isEmpty) {
+                return Container(
+                  padding: const EdgeInsets.all(20),
+                  child: Column(
+                    children: [
+                      Icon(Icons.info_outline,
+                          color: Colors.grey.shade400, size: 36),
+                      const SizedBox(height: 12),
+                      Text(
+                        'No version information available',
+                        style: TextStyle(
+                          color: Colors.grey.shade600,
+                          fontSize: 16,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        'Real-time version data could not be fetched for ${widget.category}',
+                        style: TextStyle(
+                            color: Colors.grey.shade500, fontSize: 14),
+                        textAlign: TextAlign.center,
+                      ),
+                      const SizedBox(height: 16),
+                      ElevatedButton.icon(
+                        onPressed: _fetchRealTimeVersions,
+                        icon: const Icon(Icons.refresh, size: 16),
+                        label: const Text('Try Again'),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.orange.shade100,
+                          foregroundColor: Colors.orange.shade700,
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 16, vertical: 8),
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              }
+
               final showExpanded = isVersionsExpanded.value;
               final displayVersions =
                   showExpanded ? versions : versions.take(3).toList();
 
-              if (versions.isEmpty) {
-                return Container(
-                  padding: const EdgeInsets.all(16),
-                  child: Column(
-                    children: [
-                      Icon(Icons.info_outline,
-                          color: Colors.grey.shade400, size: 32),
-                      const SizedBox(height: 8),
-                      Text(
-                        'No version information available',
-                        style: TextStyle(color: Colors.grey.shade600),
-                      ),
-                      const SizedBox(height: 8),
-                      ElevatedButton.icon(
-                        onPressed: _fetchRealTimeVersions,
-                        icon: const Icon(Icons.refresh, size: 16),
-                        label: const Text('Fetch Versions'),
-                        style: ElevatedButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 12, vertical: 6),
-                        ),
-                      ),
-                    ],
-                  ),
-                );
-              }
-
               return Column(
                 children: [
-                  _buildCompactVersionsList(displayVersions),
+                  // TABLE CONTAINER
+                  Container(
+                    decoration: BoxDecoration(
+                      border: Border.all(color: Colors.grey.shade300),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Column(
+                      children: [
+                        // TABLE HEADER
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                              vertical: 12, horizontal: 16),
+                          decoration: BoxDecoration(
+                            color: Colors.orange.shade50,
+                            borderRadius: const BorderRadius.only(
+                              topLeft: Radius.circular(8),
+                              topRight: Radius.circular(8),
+                            ),
+                          ),
+                          child: Row(
+                            children: [
+                              Container(
+                                width: 30,
+                                alignment: Alignment.center,
+                                child: Text(
+                                  '#',
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.orange.shade700,
+                                    fontSize: 14,
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                flex: 3,
+                                child: Text(
+                                  'Technology',
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.orange.shade700,
+                                    fontSize: 14,
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                flex: 2,
+                                child: Text(
+                                  'Version',
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.orange.shade700,
+                                    fontSize: 14,
+                                  ),
+                                  textAlign: TextAlign.center,
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                flex: 2,
+                                child: Text(
+                                  'Released',
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.orange.shade700,
+                                    fontSize: 14,
+                                  ),
+                                  textAlign: TextAlign.center,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+
+                        // TABLE ROWS
+                        ...displayVersions.asMap().entries.map((entry) {
+                          final index = entry.key;
+                          final version = entry.value;
+                          final isEven = index % 2 == 0;
+
+                          return Container(
+                            padding: const EdgeInsets.symmetric(
+                                vertical: 12, horizontal: 16),
+                            decoration: BoxDecoration(
+                              color:
+                                  isEven ? Colors.white : Colors.grey.shade50,
+                              border: Border(
+                                bottom: index < displayVersions.length - 1
+                                    ? BorderSide(
+                                        color: Colors.grey.shade200, width: 0.5)
+                                    : BorderSide.none,
+                              ),
+                            ),
+                            child: Row(
+                              children: [
+                                // ROW NUMBER
+                                Container(
+                                  width: 30,
+                                  alignment: Alignment.center,
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 6, vertical: 2),
+                                    decoration: BoxDecoration(
+                                      color: Colors.orange.shade100,
+                                      borderRadius: BorderRadius.circular(10),
+                                    ),
+                                    child: Text(
+                                      '${index + 1}',
+                                      style: TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.orange.shade700,
+                                        fontSize: 12,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+
+                                // TECHNOLOGY NAME & INFO
+                                Expanded(
+                                  flex: 3,
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        _cleanName(version.technology),
+                                        style: const TextStyle(
+                                          fontWeight: FontWeight.w600,
+                                          fontSize: 14,
+                                        ),
+                                      ),
+                                      if (version
+                                          .additionalInfo.isNotEmpty) ...[
+                                        const SizedBox(height: 2),
+                                        Text(
+                                          version.additionalInfo,
+                                          style: TextStyle(
+                                            fontSize: 11,
+                                            color: Colors.grey.shade600,
+                                            fontStyle: FontStyle.italic,
+                                          ),
+                                        ),
+                                      ],
+                                    ],
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+
+                                // VERSION
+                                Expanded(
+                                  flex: 2,
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 8, vertical: 4),
+                                    decoration: BoxDecoration(
+                                      color: Colors.blue.shade50,
+                                      borderRadius: BorderRadius.circular(6),
+                                      border: Border.all(
+                                          color: Colors.blue.shade200,
+                                          width: 0.5),
+                                    ),
+                                    child: Text(
+                                      version.version,
+                                      style: TextStyle(
+                                        color: Colors.blue.shade700,
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 12,
+                                        fontFamily: 'monospace',
+                                      ),
+                                      textAlign: TextAlign.center,
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+
+                                // RELEASE DATE
+                                Expanded(
+                                  flex: 2,
+                                  child: Text(
+                                    version.releaseDate.isNotEmpty
+                                        ? _formatDate(version.releaseDate)
+                                        : 'Unknown',
+                                    style: TextStyle(
+                                      fontSize: 11,
+                                      color: Colors.grey.shade600,
+                                      fontFamily: 'monospace',
+                                    ),
+                                    textAlign: TextAlign.center,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          );
+                        }).toList(),
+                      ],
+                    ),
+                  ),
+
+                  // EXPAND/COLLAPSE BUTTON
                   if (versions.length > 3) ...[
-                    const SizedBox(height: 8),
+                    const SizedBox(height: 12),
                     Align(
                       alignment: Alignment.centerRight,
                       child: TextButton.icon(
@@ -629,7 +1484,7 @@ class _DataDisplayScreenState extends State<DataDisplayScreen> {
                         style: TextButton.styleFrom(
                           foregroundColor: Colors.orange.shade600,
                           padding: const EdgeInsets.symmetric(
-                              horizontal: 8, vertical: 4),
+                              horizontal: 12, vertical: 6),
                         ),
                       ),
                     ),
@@ -643,114 +1498,7 @@ class _DataDisplayScreenState extends State<DataDisplayScreen> {
     );
   }
 
-  // NEW: Build compact versions list
-  Widget _buildCompactVersionsList(List<VersionInfo> versions) {
-    // Filter out empty versions or those with no version or release date
-    versions = versions.where((version) {
-      return version.version.isNotEmpty && version.releaseDate.isNotEmpty;
-    }).toList();
-
-    return Column(
-      children: versions.asMap().entries.map((entry) {
-        final index = entry.key;
-        final version = entry.value;
-
-        // Skip this entry if the version is empty
-        if (version.version.isEmpty || version.releaseDate.isEmpty) {
-          return const SizedBox.shrink();
-        }
-
-        return Container(
-          margin: const EdgeInsets.only(bottom: 8),
-          padding: const EdgeInsets.all(12),
-          decoration: BoxDecoration(
-            color: index % 2 == 0 ? Colors.grey.shade50 : Colors.white,
-            borderRadius: BorderRadius.circular(8),
-            border: Border.all(color: Colors.grey.shade200),
-          ),
-          child: Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                decoration: BoxDecoration(
-                  color: Colors.green.shade100,
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Text(
-                  '${index + 1}',
-                  style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                    color: Colors.green.shade700,
-                    fontSize: 12,
-                  ),
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                flex: 3,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      _cleanName(version.technology),
-                      style: const TextStyle(fontWeight: FontWeight.bold),
-                    ),
-                    if (version.additionalInfo.isNotEmpty)
-                      Text(
-                        version.additionalInfo,
-                        style: TextStyle(
-                          fontSize: 11,
-                          color: Colors.grey.shade600,
-                          fontStyle: FontStyle.italic,
-                        ),
-                      ),
-                  ],
-                ),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                flex: 2,
-                child: Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: Colors.blue.shade50,
-                    borderRadius: BorderRadius.circular(4),
-                    border: Border.all(color: Colors.blue.shade200),
-                  ),
-                  child: Text(
-                    version.version,
-                    style: TextStyle(
-                      color: Colors.blue.shade700,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 12,
-                    ),
-                    textAlign: TextAlign.center,
-                  ),
-                ),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                flex: 2,
-                child: Text(
-                  version.releaseDate.isNotEmpty
-                      ? _formatDate(version.releaseDate)
-                      : 'Unknown',
-                  style: TextStyle(
-                    fontSize: 11,
-                    color: Colors.grey.shade600,
-                  ),
-                  textAlign: TextAlign.center,
-                ),
-              ),
-            ],
-          ),
-        );
-      }).toList(),
-    );
-  }
-
-  // NEW: Build compact sources section
+  // SOURCES SECTION (unchanged)
   Widget _buildCompactSourcesSection(TechGuideResponse response) {
     return Card(
       elevation: 2,
@@ -759,7 +1507,6 @@ class _DataDisplayScreenState extends State<DataDisplayScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // HIGHLIGHTED SUBHEADING
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
               decoration: BoxDecoration(
@@ -805,7 +1552,6 @@ class _DataDisplayScreenState extends State<DataDisplayScreen> {
               ),
             ),
             const SizedBox(height: 12),
-
             Obx(() {
               final sources = response.sources.where((source) {
                 if (source == null) return false;
@@ -867,7 +1613,7 @@ class _DataDisplayScreenState extends State<DataDisplayScreen> {
     );
   }
 
-  // NEW: Build compact documentation section
+  // DOCUMENTATION SECTION (unchanged)
   Widget _buildCompactDocumentationSection(TechGuideResponse response) {
     return Card(
       elevation: 2,
@@ -876,7 +1622,6 @@ class _DataDisplayScreenState extends State<DataDisplayScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // HIGHLIGHTED SUBHEADING
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
               decoration: BoxDecoration(
@@ -904,7 +1649,6 @@ class _DataDisplayScreenState extends State<DataDisplayScreen> {
               ),
             ),
             const SizedBox(height: 12),
-
             Obx(() {
               final docs = response.documentationLinks;
               final showExpanded = isDocumentationExpanded.value;
@@ -950,7 +1694,7 @@ class _DataDisplayScreenState extends State<DataDisplayScreen> {
     );
   }
 
-  // NEW: Build compact source item
+  // BUILD COMPACT SOURCE ITEM (unchanged)
   Widget _buildCompactSourceItem(int index, dynamic source,
       {bool isDocumentation = false}) {
     final sourceName = _cleanName(source.name?.toString() ?? 'Unknown Source');
@@ -1039,7 +1783,7 @@ class _DataDisplayScreenState extends State<DataDisplayScreen> {
     );
   }
 
-  // NEW: Build compact empty state
+  // BUILD COMPACT EMPTY STATE
   Widget _buildCompactEmptyState({
     required IconData icon,
     required String title,
@@ -1087,7 +1831,7 @@ class _DataDisplayScreenState extends State<DataDisplayScreen> {
     );
   }
 
-  // Copy content to clipboard
+  // COPY TO CLIPBOARD
   void _copyToClipboard(TechGuideController controller) {
     if (controller.response.value != null) {
       final content = _cleanContent(controller.response.value!.mainContent);
@@ -1103,7 +1847,7 @@ class _DataDisplayScreenState extends State<DataDisplayScreen> {
     }
   }
 
-  // Build feedback section (more compact)
+  // BUILD FEEDBACK SECTION
   Widget _buildFeedbackSection() {
     return Card(
       elevation: 2,
@@ -1113,7 +1857,6 @@ class _DataDisplayScreenState extends State<DataDisplayScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // HIGHLIGHTED SUBHEADING
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
               decoration: BoxDecoration(
@@ -1191,7 +1934,7 @@ class _DataDisplayScreenState extends State<DataDisplayScreen> {
     );
   }
 
-  // Show follow-up question dialog
+  // SHOW FOLLOW-UP QUESTION DIALOG
   void _showFollowUpDialog() {
     final TextEditingController questionController = TextEditingController();
 
@@ -1230,7 +1973,7 @@ class _DataDisplayScreenState extends State<DataDisplayScreen> {
     );
   }
 
-  // Show feedback dialog
+  // SHOW FEEDBACK DIALOG
   void _showFeedbackDialog() {
     final List<String> feedbackOptions = [
       'Information is not accurate',
@@ -1291,7 +2034,7 @@ class _DataDisplayScreenState extends State<DataDisplayScreen> {
     );
   }
 
-  // Show source suggestion dialog (simplified)
+  // SHOW SOURCE SUGGESTION DIALOG
   void _showSourceSuggestionDialog() {
     Get.dialog(
       AlertDialog(
@@ -1345,7 +2088,7 @@ class _DataDisplayScreenState extends State<DataDisplayScreen> {
     );
   }
 
-  // Build suggestion item for the dialog
+  // BUILD SUGGESTION ITEM
   Widget _buildSuggestionItem(IconData icon, String title, String description) {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
