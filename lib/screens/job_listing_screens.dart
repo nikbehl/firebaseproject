@@ -640,8 +640,14 @@ class _JobListingsScreenState extends State<JobListingsScreen> {
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(Icons.attach_money,
-                        size: 16, color: Colors.blue.shade700),
+                    Text(
+                      '₹',
+                      style: TextStyle(
+                        color: Colors.blue.shade700,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                      ),
+                    ),
                     const SizedBox(width: 4),
                     Text(
                       job.salary,
